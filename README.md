@@ -73,3 +73,8 @@ O bypass de auth (`AUTH_DEV_BYPASS_EMAIL`) só funciona em `next dev` e em previ
 ## Funil
 
 `/quizzes/<id>/funnel`: sessões únicas por step da versão publicada, cliques no checkout e compras aprovadas; 7/30/90 dias, versão atual ou todas.
+
+## Versões e templates
+
+- `/quizzes/<id>/versions`: cada publicação é uma versão imutável. **Colocar no ar** faz rollback (só troca `published_version_id` e invalida o cache do runtime; não cria versão nova). **Copiar para o rascunho** traz a versão para edição (com lock otimista). Há pré-visualização de cada versão.
+- Templates: salve o rascunho em Configurações do quiz; use em "Novo quiz → Começar de"; gerencie em `/templates`. Há um template padrão no código (`BUILT_IN_TEMPLATES`). Templates antigos passam por `parseDocument`, então migram junto com o schema.

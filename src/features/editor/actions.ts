@@ -1,12 +1,11 @@
 "use server";
 
-import { revalidatePath, revalidateTag } from "next/cache";
+import { revalidatePath } from "next/cache";
 import { requireStudioUser } from "@/features/auth/require-studio-user";
-import { domainService } from "@/features/domains/server";
 import { signUpload, type SignedUpload } from "@/features/media/sign-upload";
 import { quizService } from "@/features/quiz/server";
 import type { Result } from "@/features/quiz/types";
-import { runtimeTags } from "@/features/runtime/runtime-tags";
+import { revalidateQuizRuntime } from "@/features/runtime/revalidate-quiz";
 import { cloudinaryUploadEnv } from "@/lib/env";
 
 export async function saveDraftAction(id: string, document: unknown, revision: number): Promise<Result<{ revision: number }>> {
@@ -20,9 +19,7 @@ export async function publishAction(id: string, revision: number): Promise<Resul
   const result = await quizService().publish(id, revision, email);
   if (!result.success) return result;
 
-  // expire 0: o próximo visitante já recebe a versão nova (correção urgente não espera).
-  const hosts = await domainService().hostsForQuiz(id);
-  for (const tag of [runtimeTags.quiz(id), ...hosts.map(runtimeTags.host)]) revalidateTag(tag, { expire: 0 });
+  await revalidateQuizRuntime(id);
   revalidatePath("/studio");
   return { success: true, data: { versionNumber: result.data.versionNumber } };
 }

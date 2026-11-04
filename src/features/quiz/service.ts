@@ -23,6 +23,17 @@ async function withSlugCheck<T>(run: () => Promise<T>): Promise<Result<T>> {
 }
 
 export function createQuizService(repo: QuizRepository) {
+  async function saveDraft(id: string, rawDocument: unknown, expectedRevision: number): Promise<Result<QuizRecord>> {
+    const parsed = parseDocument(rawDocument);
+    if (!parsed.success) return { success: false, error: parsed.error };
+    try {
+      return { success: true, data: await repo.saveDraft(id, parsed.data, expectedRevision) };
+    } catch (error) {
+      if (error instanceof RevisionConflictError) return CONFLICT;
+      throw error;
+    }
+  }
+
   return {
     list(): Promise<QuizSummary[]> {
       return repo.list();
@@ -32,12 +43,10 @@ export function createQuizService(repo: QuizRepository) {
       return repo.findById(id);
     },
 
-    async create(input: unknown, user: string): Promise<Result<QuizRecord>> {
+    async create(input: unknown, user: string, document = createEmptyDocument()): Promise<Result<QuizRecord>> {
       const meta = parseMeta(input);
       if (!meta.success) return meta;
-      return withSlugCheck(() =>
-        repo.create({ ...meta.data, draftDocument: createEmptyDocument(), createdBy: user }),
-      );
+      return withSlugCheck(() => repo.create({ ...meta.data, draftDocument: document, createdBy: user }));
     },
 
     async updateMeta(id: string, input: unknown): Promise<Result<QuizRecord>> {
@@ -59,16 +68,7 @@ export function createQuizService(repo: QuizRepository) {
       );
     },
 
-    async saveDraft(id: string, rawDocument: unknown, expectedRevision: number): Promise<Result<QuizRecord>> {
-      const parsed = parseDocument(rawDocument);
-      if (!parsed.success) return { success: false, error: parsed.error };
-      try {
-        return { success: true, data: await repo.saveDraft(id, parsed.data, expectedRevision) };
-      } catch (error) {
-        if (error instanceof RevisionConflictError) return CONFLICT;
-        throw error;
-      }
-    },
+    saveDraft,
 
     // Publica exatamente a revisão que o usuário está vendo; regras de publicação valem aqui.
     async publish(id: string, expectedRevision: number, user: string, now = new Date()): Promise<Result<PublishedVersion>> {
@@ -87,6 +87,27 @@ export function createQuizService(repo: QuizRepository) {
 
     findVersion(versionId: string) {
       return repo.findVersion(versionId);
+    },
+
+    listVersions(quizId: string) {
+      return repo.listVersions(quizId);
+    },
+
+    // Rollback não cria versão: só volta o ponteiro de publicação (o histórico segue imutável).
+    async rollback(quizId: string, versionId: string): Promise<Result<{ versionNumber: number }>> {
+      const quiz = await repo.findById(quizId);
+      if (!quiz || quiz.status === "archived") return NOT_FOUND;
+      const version = await repo.findVersion(versionId);
+      if (!version || version.quizId !== quizId) return { success: false, error: "Versão não encontrada" };
+      await repo.setPublishedVersion(quizId, versionId);
+      return { success: true, data: { versionNumber: version.versionNumber } };
+    },
+
+    // Traz uma versão antiga para o rascunho, para editar a partir dela.
+    async restoreToDraft(quizId: string, versionId: string, expectedRevision: number): Promise<Result<QuizRecord>> {
+      const version = await repo.findVersion(versionId);
+      if (!version || version.quizId !== quizId) return { success: false, error: "Versão não encontrada" };
+      return saveDraft(quizId, structuredClone(version.document), expectedRevision);
     },
 
     async archive(id: string): Promise<Result<null>> {

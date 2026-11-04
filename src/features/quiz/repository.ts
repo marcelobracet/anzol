@@ -16,7 +16,8 @@ export class RevisionConflictError extends Error {
 }
 
 export type PublishedVersion = { versionId: string; versionNumber: number };
-export type QuizVersion = { id: string; quizId: string; versionNumber: number; document: QuizDocument; createdAt: string };
+export type QuizVersionSummary = { id: string; quizId: string; versionNumber: number; createdAt: string; createdBy: string };
+export type QuizVersion = QuizVersionSummary & { document: QuizDocument };
 
 export interface QuizRepository {
   list(): Promise<QuizSummary[]>;
@@ -31,4 +32,8 @@ export interface QuizRepository {
   publish(id: string, expectedRevision: number, createdBy: string): Promise<PublishedVersion>;
   archive(id: string): Promise<boolean>;
   findVersion(versionId: string): Promise<QuizVersion | null>;
+  /** Mais nova primeiro. */
+  listVersions(quizId: string): Promise<QuizVersionSummary[]>;
+  /** Aponta a publicação para uma versão existente (rollback). */
+  setPublishedVersion(quizId: string, versionId: string): Promise<void>;
 }

@@ -5,17 +5,18 @@ import { requireStudioUser } from "@/features/auth/require-studio-user";
 import { createQuizAction } from "@/features/quiz/actions";
 import { QuizMetaForm } from "@/features/quiz/components/quiz-meta-form";
 import { quizService } from "@/features/quiz/server";
+import { templateService } from "@/features/templates/server";
 
 export default async function StudioHome() {
   await requireStudioUser();
-  const quizzes = await quizService().list();
+  const [quizzes, templates] = await Promise.all([quizService().list(), templateService().list()]);
 
   return (
     <div className="mx-auto grid max-w-5xl gap-8 px-4 py-8">
       <Card>
         <CardHeader><CardTitle>Novo quiz</CardTitle></CardHeader>
         <CardContent>
-          <QuizMetaForm action={createQuizAction} submitLabel="Criar quiz" />
+          <QuizMetaForm action={createQuizAction} submitLabel="Criar quiz" templates={templates} />
         </CardContent>
       </Card>
 
