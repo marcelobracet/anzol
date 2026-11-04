@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireStudioUser } from "@/features/auth/require-studio-user";
+import { templateService } from "@/features/templates/server";
 import { quizService } from "./server";
 import type { Result } from "./types";
 
@@ -18,7 +19,8 @@ const metaFromForm = (form: FormData) => ({
 // Cada action revalida a sessão: o proxy pode não cobrir todo POST de Server Function.
 export async function createQuizAction(_prev: FormState, form: FormData): Promise<FormState> {
   const { email } = await requireStudioUser();
-  const result = await quizService().create(metaFromForm(form), email);
+  const templateId = String(form.get("templateId") ?? "") || null;
+  const result = await templateService().createQuiz(metaFromForm(form), templateId, email);
   if (!result.success) return result;
   revalidatePath("/studio");
   redirect(`/quizzes/${result.data.id}`);

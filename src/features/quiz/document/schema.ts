@@ -16,6 +16,8 @@ export type Theme = z.infer<typeof Theme>;
 export const Offer = z.object({
   id: Id,
   provider: z.enum(["hotmart", "kiwify"]),
+  // Liga a compra do webhook a esta oferta (e ao quiz).
+  productId: z.string().trim().min(1).max(64).optional(),
   fullPriceUrl: HttpsUrl,
   promo: z.object({ url: HttpsUrl, expiresAt: z.iso.datetime({ offset: true }) }).optional(),
 });
@@ -59,6 +61,9 @@ export const QuizDocument = z
     settings: z
       .object({ showProgress: z.boolean().default(true), allowBack: z.boolean().default(true) })
       .default({ showProgress: true, allowBack: true }),
+    tracking: z
+      .object({ metaPixelId: z.string().regex(/^\d{5,20}$/, "Pixel ID: só números").optional() })
+      .default({}),
     steps: z.array(Step).min(1).max(60),
   })
   .superRefine((doc, ctx) => {

@@ -100,6 +100,58 @@ export function createSupabaseQuizRepository(db: SupabaseClient): QuizRepository
       return toRecord(data);
     },
 
+    async publish(id, expectedRevision, createdBy) {
+      const { data, error } = await db
+        .rpc("publish_quiz", { p_quiz_id: id, p_expected_revision: expectedRevision, p_created_by: createdBy })
+        .single<{ version_id: string; version_number: number }>();
+      if (error?.message.includes("revision_conflict")) throw new RevisionConflictError();
+      if (error) fail(error);
+      return { versionId: data.version_id, versionNumber: data.version_number };
+    },
+
+    async findVersion(versionId) {
+      const { data, error } = await db
+        .from("quiz_versions")
+        .select("id, quiz_id, version_number, document, created_at, created_by")
+        .eq("id", versionId)
+        .maybeSingle();
+      if (error) fail(error);
+      if (!data) return null;
+      const document = parseDocument(data.document);
+      if (!document.success) throw new Error(`Versão ${versionId} inválida: ${document.error}`);
+      return {
+        id: String(data.id),
+        quizId: String(data.quiz_id),
+        versionNumber: Number(data.version_number),
+        document: document.data,
+        createdAt: String(data.created_at),
+        createdBy: String(data.created_by),
+      };
+    },
+
+    async listVersions(quizId) {
+      const { data, error } = await db
+        .from("quiz_versions")
+        .select("id, quiz_id, version_number, created_at, created_by")
+        .eq("quiz_id", quizId)
+        .order("version_number", { ascending: false });
+      if (error) fail(error);
+      return data.map((row) => ({
+        id: String(row.id),
+        quizId: String(row.quiz_id),
+        versionNumber: Number(row.version_number),
+        createdAt: String(row.created_at),
+        createdBy: String(row.created_by),
+      }));
+    },
+
+    async setPublishedVersion(quizId, versionId) {
+      const { error } = await quizzes()
+        .update({ published_version_id: versionId, status: "published", updated_at: new Date().toISOString() })
+        .eq("id", quizId);
+      if (error) fail(error);
+    },
+
     async archive(id) {
       const { data, error } = await quizzes()
         .update({ status: "archived", updated_at: new Date().toISOString() })

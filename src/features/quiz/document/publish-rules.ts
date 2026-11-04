@@ -2,7 +2,8 @@ import type { QuizDocument } from "./schema";
 
 export type PublishIssue = { code: string; stepId?: string; message: string };
 
-const FINAL_STEP_TYPES = new Set(["result", "vsl"]);
+// Steps que encerram o quiz: resultado, VSL ou timer (cujo botão leva ao checkout).
+const FINAL_STEP_TYPES = new Set(["result", "vsl", "offerTimer"]);
 
 // Regras de negócio que só valem na publicação. O rascunho pode estar incompleto.
 export function validateForPublish(doc: QuizDocument, now: Date = new Date()): PublishIssue[] {
@@ -47,7 +48,7 @@ export function validateForPublish(doc: QuizDocument, now: Date = new Date()): P
     issues.push({
       code: "invalid-final-step",
       stepId: last.id,
-      message: "O último step visível precisa ser Resultado ou VSL",
+      message: "O último step visível precisa ser Resultado, VSL ou Oferta com prazo",
     });
   }
   return issues;

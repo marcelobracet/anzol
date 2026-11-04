@@ -1,0 +1,45 @@
+"use client";
+
+import type { ComponentType } from "react";
+import type { Step, StepType } from "@/features/steps/schema";
+import { TextField } from "../components/fields";
+import { errorAt, STEP_TYPE_LABELS } from "../document-ops";
+import type { StepFormProps } from "./form-props";
+import { InfoForm } from "./info-form";
+import { LeadFormForm } from "./lead-form-form";
+import { LoadingForm } from "./loading-form";
+import { OfferTimerForm } from "./offer-timer-form";
+import { QuestionForm } from "./question-form";
+import { ResultForm } from "./result-form";
+import { SocialProofForm } from "./social-proof-form";
+import { VslForm } from "./vsl-form";
+
+const FORMS: { [T in StepType]: ComponentType<StepFormProps<Extract<Step, { type: T }>>> } = {
+  question: QuestionForm,
+  info: InfoForm,
+  loading: LoadingForm,
+  result: ResultForm,
+  vsl: VslForm,
+  offerTimer: OfferTimerForm,
+  leadForm: LeadFormForm,
+  socialProof: SocialProofForm,
+};
+
+export function StepForm(props: StepFormProps) {
+  const { step, onChange, issues } = props;
+  const Form = FORMS[step.type] as ComponentType<StepFormProps>;
+  return (
+    <div className="grid gap-4">
+      <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">{STEP_TYPE_LABELS[step.type]}</p>
+      <TextField
+        label="Nome interno"
+        hint="Aparece no Studio e no funil"
+        maxLength={80}
+        value={step.name}
+        onChange={(name) => onChange({ ...step, name })}
+        error={errorAt(issues, "name")}
+      />
+      <Form {...props} />
+    </div>
+  );
+}

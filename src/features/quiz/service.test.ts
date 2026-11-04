@@ -116,3 +116,117 @@ describe("archive", () => {
     expect(await service.list()).toEqual([]);
   });
 });
+
+describe("publish", () => {
+  const NOW = new Date("2026-11-04T12:00:00Z");
+
+  async function createPublishable() {
+    const quiz = await createOk();
+    const saved = await service.saveDraft(quiz.id, QuizDocument.parse(fullDocumentInput()), quiz.draftRevision);
+    if (!saved.success) throw new Error(saved.error);
+    return saved.data;
+  }
+
+  it("publica o rascunho como versão 1 e marca o quiz como publicado", async () => {
+    const quiz = await createPublishable();
+    const result = await service.publish(quiz.id, quiz.draftRevision, USER, NOW);
+    expect(result).toMatchObject({ success: true, data: { versionNumber: 1 } });
+    const after = await service.findById(quiz.id);
+    expect(after).toMatchObject({ status: "published" });
+    expect(after?.publishedVersionId).toBe(result.success ? result.data.versionId : "");
+  });
+
+  it("cada publicação cria a próxima versão", async () => {
+    const quiz = await createPublishable();
+    await service.publish(quiz.id, quiz.draftRevision, USER, NOW);
+    const second = await service.publish(quiz.id, quiz.draftRevision, USER, NOW);
+    expect(second).toMatchObject({ success: true, data: { versionNumber: 2 } });
+  });
+
+  it("bloqueia rascunho que não passa nas regras de publicação", async () => {
+    const quiz = await createOk(); // documento inicial termina num step info
+    const result = await service.publish(quiz.id, quiz.draftRevision, USER, NOW);
+    expect(result.success).toBe(false);
+    expect(!result.success && result.error).toMatch(/último step/i);
+  });
+
+  it("recusa publicar uma revisão que não é a atual", async () => {
+    const quiz = await createPublishable();
+    const result = await service.publish(quiz.id, quiz.draftRevision - 1, USER, NOW);
+    expect(result).toEqual({ success: false, error: "O rascunho foi alterado por outra pessoa. Recarregue." });
+  });
+
+  it("quiz inexistente ou arquivado", async () => {
+    expect(await service.publish("00000000-0000-4000-8000-000000000000", 1, USER, NOW)).toEqual({
+      success: false,
+      error: "Quiz não encontrado",
+    });
+    const quiz = await createPublishable();
+    await service.archive(quiz.id);
+    expect((await service.publish(quiz.id, quiz.draftRevision, USER, NOW)).success).toBe(false);
+  });
+});
+
+describe("findVersion", () => {
+  it("devolve o documento congelado da versão publicada", async () => {
+    const quiz = await createOk();
+    const saved = await service.saveDraft(quiz.id, QuizDocument.parse(fullDocumentInput()), quiz.draftRevision);
+    if (!saved.success) throw new Error(saved.error);
+    const published = await service.publish(quiz.id, saved.data.draftRevision, USER, new Date("2026-11-04T12:00:00Z"));
+    if (!published.success) throw new Error(published.error);
+    const version = await service.findVersion(published.data.versionId);
+    expect(version).toMatchObject({ id: published.data.versionId, quizId: quiz.id, versionNumber: 1 });
+    expect(version?.document.steps).toHaveLength(saved.data.draftDocument.steps.length);
+    expect(await service.findVersion("00000000-0000-4000-8000-000000000000")).toBeNull();
+  });
+});
+
+describe("versões e rollback", () => {
+  const NOW = new Date("2026-11-04T12:00:00Z");
+
+  async function publishTwice() {
+    const quiz = await createOk();
+    const doc = QuizDocument.parse(fullDocumentInput());
+    const v1Draft = await service.saveDraft(quiz.id, doc, quiz.draftRevision);
+    if (!v1Draft.success) throw new Error(v1Draft.error);
+    const v1 = await service.publish(quiz.id, v1Draft.data.draftRevision, USER, NOW);
+    const changed = { ...doc, steps: doc.steps.map((s, i) => (i === 0 ? { ...s, name: "Mudou" } : s)) };
+    const v2Draft = await service.saveDraft(quiz.id, changed, v1Draft.data.draftRevision);
+    if (!v2Draft.success || !v1.success) throw new Error("setup");
+    const v2 = await service.publish(quiz.id, v2Draft.data.draftRevision, "outro@x.com", NOW);
+    if (!v2.success) throw new Error(v2.error);
+    return { quiz, v1: v1.data, v2: v2.data, revision: v2Draft.data.draftRevision };
+  }
+
+  it("lista as versões da mais nova para a mais antiga, com autor", async () => {
+    const { quiz } = await publishTwice();
+    const versions = await service.listVersions(quiz.id);
+    expect(versions.map((v) => [v.versionNumber, v.createdBy])).toEqual([
+      [2, "outro@x.com"],
+      [1, USER],
+    ]);
+  });
+
+  it("rollback aponta a publicação para uma versão anterior sem criar versão nova", async () => {
+    const { quiz, v1 } = await publishTwice();
+    expect(await service.rollback(quiz.id, v1.versionId)).toEqual({ success: true, data: { versionNumber: 1 } });
+    expect((await service.findById(quiz.id))?.publishedVersionId).toBe(v1.versionId);
+    expect(await service.listVersions(quiz.id)).toHaveLength(2);
+  });
+
+  it("rollback recusa versão de outro quiz ou quiz arquivado", async () => {
+    const { quiz, v1 } = await publishTwice();
+    const other = await createOk({ ...META, slug: "outro-quiz" });
+    expect(await service.rollback(other.id, v1.versionId)).toEqual({ success: false, error: "Versão não encontrada" });
+    await service.archive(quiz.id);
+    expect((await service.rollback(quiz.id, v1.versionId)).success).toBe(false);
+  });
+
+  it("copia uma versão para o rascunho com lock otimista", async () => {
+    const { quiz, v1, revision } = await publishTwice();
+    const result = await service.restoreToDraft(quiz.id, v1.versionId, revision);
+    expect(result.success && result.data.draftDocument.steps[0].name).not.toBe("Mudou");
+    expect(result.success && result.data.draftRevision).toBe(revision + 1);
+    expect(await service.restoreToDraft(quiz.id, v1.versionId, revision)).toMatchObject({ success: false });
+  });
+});

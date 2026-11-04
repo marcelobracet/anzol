@@ -45,3 +45,36 @@ function parse<T extends z.ZodType>(schema: T, group: string): z.infer<T> {
 export const authEnv = (): AuthEnv => parse(AuthEnvSchema, "auth");
 export const routingEnv = (): RoutingEnv => parse(RoutingEnvSchema, "routing");
 export const databaseEnv = (): DatabaseEnv => parse(DatabaseEnvSchema, "database");
+
+const MediaEnvSchema = z.object({
+  CLOUDINARY_CLOUD_NAME: z.string().regex(/^[a-z0-9_-]+$/i).optional(),
+  // Pull zone da biblioteca do Bunny Stream, ex.: vz-abc123.b-cdn.net
+  BUNNY_CDN_HOST: z.string().regex(/^[a-z0-9.-]+$/i).optional(),
+});
+export type MediaEnv = z.infer<typeof MediaEnvSchema>;
+export const mediaEnv = (): MediaEnv => parse(MediaEnvSchema, "media");
+
+const CloudinaryUploadEnvSchema = z.object({
+  CLOUDINARY_CLOUD_NAME: z.string().regex(/^[a-z0-9_-]+$/i),
+  CLOUDINARY_API_KEY: z.string().min(1),
+  CLOUDINARY_API_SECRET: z.string().min(1),
+});
+export const cloudinaryUploadEnv = () => parse(CloudinaryUploadEnvSchema, "cloudinary");
+
+const VercelEnvSchema = z.object({
+  VERCEL_API_TOKEN: z.string().min(1),
+  VERCEL_PROJECT_ID: z.string().min(1),
+  VERCEL_TEAM_ID: z.string().min(1).optional(),
+});
+export const vercelApiEnv = () => parse(VercelEnvSchema, "vercel");
+
+const TrackingEnvSchema = z.object({
+  // Token da Conversions API: só no servidor, nunca em NEXT_PUBLIC_*.
+  META_CAPI_TOKEN: z.string().min(20).optional(),
+});
+export const trackingEnv = () => parse(TrackingEnvSchema, "tracking");
+
+const WebhookEnvSchema = z.object({
+  HOTMART_HOTTOK: z.string().min(10),
+});
+export const webhookEnv = () => parse(WebhookEnvSchema, "webhook");
