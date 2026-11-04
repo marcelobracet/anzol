@@ -1,7 +1,7 @@
 "use client";
 
 import type { QuizDocument, Theme } from "@/features/quiz/document/schema";
-import { CheckboxField, ColorField, NumberField, SelectField } from "../components/fields";
+import { CheckboxField, ColorField, NumberField, SelectField, TextField } from "../components/fields";
 import { MediaField } from "../components/media-field";
 import { errorAt, type EditorIssue } from "../document-ops";
 
@@ -26,11 +26,13 @@ type Props = {
   settings: QuizDocument["settings"];
   onTheme: (theme: Theme) => void;
   onSettings: (settings: QuizDocument["settings"]) => void;
+  tracking: QuizDocument["tracking"];
+  onTracking: (tracking: QuizDocument["tracking"]) => void;
   issues?: EditorIssue[];
   cloudName?: string;
 };
 
-export function ThemeForm({ theme, settings, onTheme, onSettings, issues, cloudName }: Props) {
+export function ThemeForm({ theme, settings, onTheme, onSettings, tracking, onTracking, issues, cloudName }: Props) {
   return (
     <div className="grid gap-4">
       <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">Tema</p>
@@ -57,6 +59,15 @@ export function ThemeForm({ theme, settings, onTheme, onSettings, issues, cloudN
       <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">Navegação</p>
       <CheckboxField label="Mostrar barra de progresso" checked={settings.showProgress} onChange={(showProgress) => onSettings({ ...settings, showProgress })} />
       <CheckboxField label="Permitir voltar" checked={settings.allowBack} onChange={(allowBack) => onSettings({ ...settings, allowBack })} />
+      <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">Rastreamento</p>
+      <TextField
+        label="Meta Pixel ID"
+        hint="Pixel no navegador e Conversions API no servidor, com o mesmo event_id. Na UE, só após consentimento."
+        maxLength={20}
+        value={tracking.metaPixelId}
+        onChange={(v) => onTracking({ ...tracking, metaPixelId: v.trim() || undefined })}
+        error={errorAt(issues, "tracking", "metaPixelId")}
+      />
     </div>
   );
 }

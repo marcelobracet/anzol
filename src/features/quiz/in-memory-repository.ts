@@ -1,12 +1,12 @@
 import { randomUUID } from "node:crypto";
-import type { NewQuiz, QuizRepository } from "./repository";
+import type { NewQuiz, QuizRepository, QuizVersion } from "./repository";
 import { RevisionConflictError, SlugTakenError } from "./repository";
 import type { QuizRecord } from "./types";
 
 // Implementação para testes. Mesmo contrato da versão Supabase.
 export function createInMemoryQuizRepository(): QuizRepository {
   let rows: QuizRecord[] = [];
-  let versions: { id: string; quizId: string; versionNumber: number; document: unknown }[] = [];
+  let versions: QuizVersion[] = [];
   const now = () => new Date().toISOString();
   const slugTaken = (slug: string, exceptId?: string) =>
     rows.some((r) => r.slug === slug && r.id !== exceptId);
@@ -61,10 +61,13 @@ export function createInMemoryQuizRepository(): QuizRepository {
         throw new RevisionConflictError();
       }
       const versionNumber = versions.filter((v) => v.quizId === id).length + 1;
-      const version = { id: randomUUID(), quizId: id, versionNumber, document: structuredClone(current.draftDocument) };
+      const version = { id: randomUUID(), quizId: id, versionNumber, document: structuredClone(current.draftDocument), createdAt: now() };
       versions = [...versions, version];
       rows = rows.map((r) => (r.id === id ? { ...r, status: "published" as const, publishedVersionId: version.id } : r));
       return { versionId: version.id, versionNumber };
+    },
+    async findVersion(versionId) {
+      return versions.find((v) => v.id === versionId) ?? null;
     },
     async archive(id) {
       const exists = rows.some((r) => r.id === id);

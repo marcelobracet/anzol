@@ -1,6 +1,6 @@
 "use client";
 
-import { Paintbrush, Settings, ShoppingCart } from "lucide-react";
+import { BarChart3, Paintbrush, Settings, ShoppingCart } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { Badge } from "@/components/ui/badge";
@@ -75,6 +75,9 @@ export function QuizEditor({ quiz, liveUrl, cloudName, bunnyHost }: Props) {
             Ver no ar ↗
           </a>
         )}
+        <Link href={`/quizzes/${quiz.id}/funnel`} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+          <BarChart3 className="size-4" /> Funil
+        </Link>
         <Link href={`/quizzes/${quiz.id}/settings`} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
           <Settings className="size-4" /> Configurações
         </Link>
@@ -88,7 +91,7 @@ export function QuizEditor({ quiz, liveUrl, cloudName, bunnyHost }: Props) {
             onClick={() => setPanel("theme")}
             className={`flex items-center gap-2 rounded-lg border bg-background px-3 py-2 text-sm ${panel === "theme" ? "border-primary ring-1 ring-primary" : ""}`}
           >
-            <Paintbrush className="size-4" /> Tema e navegação
+            <Paintbrush className="size-4" /> Tema, navegação e Pixel
             {issues._doc?.some((i) => i.path[0] !== "offers") && <span className="text-destructive">●</span>}
           </button>
           <button
@@ -148,6 +151,8 @@ export function QuizEditor({ quiz, liveUrl, cloudName, bunnyHost }: Props) {
               cloudName={cloudName}
               onTheme={(theme) => update(updateTheme(doc, theme))}
               onSettings={(settings) => update(updateSettings(doc, settings))}
+              tracking={doc.tracking}
+              onTracking={(tracking) => update({ ...doc, tracking })}
             />
           ) : selected ? (
             <StepForm step={selected} issues={issues[selected.id]} cloudName={cloudName} offers={doc.offers} onChange={(step: Step) => update(replaceStep(doc, step))} />

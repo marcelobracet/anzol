@@ -109,6 +109,25 @@ export function createSupabaseQuizRepository(db: SupabaseClient): QuizRepository
       return { versionId: data.version_id, versionNumber: data.version_number };
     },
 
+    async findVersion(versionId) {
+      const { data, error } = await db
+        .from("quiz_versions")
+        .select("id, quiz_id, version_number, document, created_at")
+        .eq("id", versionId)
+        .maybeSingle();
+      if (error) fail(error);
+      if (!data) return null;
+      const document = parseDocument(data.document);
+      if (!document.success) throw new Error(`Versão ${versionId} inválida: ${document.error}`);
+      return {
+        id: String(data.id),
+        quizId: String(data.quiz_id),
+        versionNumber: Number(data.version_number),
+        document: document.data,
+        createdAt: String(data.created_at),
+      };
+    },
+
     async archive(id) {
       const { data, error } = await quizzes()
         .update({ status: "archived", updated_at: new Date().toISOString() })

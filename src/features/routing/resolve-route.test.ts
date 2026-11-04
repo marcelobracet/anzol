@@ -83,6 +83,7 @@ describe("resolveRoute — Runtime", () => {
   it("API pública de eventos passa no domínio da oferta", () => {
     expect(route("oferta.com", "/api/t")).toEqual({ kind: "runtime-api" });
     expect(route("oferta.com", "/api/t/purchases")).toEqual({ kind: "runtime-api" });
+    expect(route("oferta.com", "/api/t/geo")).toEqual({ kind: "runtime-api" });
   });
 
   it("só caminhos de API pública listados passam", () => {

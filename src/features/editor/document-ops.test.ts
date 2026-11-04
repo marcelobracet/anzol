@@ -19,8 +19,17 @@ const doc = demoDocument();
 const ids = (d: QuizDocument) => d.steps.map((s) => s.id);
 
 describe("defaultStep", () => {
-  it.each(ADDABLE_STEP_TYPES.filter((t) => t !== "vsl"))("%s nasce válido", (type) => {
+  it.each(ADDABLE_STEP_TYPES.filter((t) => t !== "vsl" && t !== "socialProof"))("%s nasce válido", (type) => {
     expect(Step.safeParse(defaultStep(type, "offer_x")).success).toBe(true);
+  });
+
+  it("captura de lead e prova social estão disponíveis", () => {
+    expect(ADDABLE_STEP_TYPES).toEqual(expect.arrayContaining(["leadForm", "socialProof"]));
+  });
+
+  it("prova social nasce sem depoimentos e só a lista fica inválida", () => {
+    const result = Step.safeParse(defaultStep("socialProof"));
+    expect(result.error?.issues.every((i) => i.path[0] === "items")).toBe(true);
   });
 
   it("VSL nasce sem vídeo e só o vídeo fica inválido", () => {

@@ -24,6 +24,7 @@ export default async function QuizPage({ params }: PageProps<"/r/[host]/[[...slu
       cloudName={media.CLOUDINARY_CLOUD_NAME}
       bunnyHost={media.BUNNY_CDN_HOST}
       purchasesEndpoint={purchasesEndpoint}
+      tracking={{ slug: slug?.[0] ?? null }}
     />
   );
 }

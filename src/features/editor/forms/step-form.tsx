@@ -6,24 +6,28 @@ import { TextField } from "../components/fields";
 import { errorAt, STEP_TYPE_LABELS } from "../document-ops";
 import type { StepFormProps } from "./form-props";
 import { InfoForm } from "./info-form";
+import { LeadFormForm } from "./lead-form-form";
 import { LoadingForm } from "./loading-form";
 import { OfferTimerForm } from "./offer-timer-form";
 import { QuestionForm } from "./question-form";
 import { ResultForm } from "./result-form";
+import { SocialProofForm } from "./social-proof-form";
 import { VslForm } from "./vsl-form";
 
-const FORMS: Partial<{ [T in StepType]: ComponentType<StepFormProps<Extract<Step, { type: T }>>> }> = {
+const FORMS: { [T in StepType]: ComponentType<StepFormProps<Extract<Step, { type: T }>>> } = {
   question: QuestionForm,
   info: InfoForm,
   loading: LoadingForm,
   result: ResultForm,
   vsl: VslForm,
   offerTimer: OfferTimerForm,
+  leadForm: LeadFormForm,
+  socialProof: SocialProofForm,
 };
 
 export function StepForm(props: StepFormProps) {
   const { step, onChange, issues } = props;
-  const Form = FORMS[step.type] as ComponentType<StepFormProps> | undefined;
+  const Form = FORMS[step.type] as ComponentType<StepFormProps>;
   return (
     <div className="grid gap-4">
       <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">{STEP_TYPE_LABELS[step.type]}</p>
@@ -35,7 +39,7 @@ export function StepForm(props: StepFormProps) {
         onChange={(name) => onChange({ ...step, name })}
         error={errorAt(issues, "name")}
       />
-      {Form ? <Form {...props} /> : <p className="text-sm text-muted-foreground">Edição deste tipo chega nas próximas entregas.</p>}
+      <Form {...props} />
     </div>
   );
 }

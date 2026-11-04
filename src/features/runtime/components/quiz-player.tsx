@@ -1,9 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useReducer, useRef } from "react";
+import { useCallback, useEffect, useReducer, useRef, useState } from "react";
 import type { QuizDocument } from "@/features/quiz/document/schema";
 import { MediaView } from "@/features/media/components/media-view";
 import { StepView } from "@/features/steps/registry";
+import { ConsentBanner } from "@/features/tracking/client/consent-banner";
+import { useTracker } from "@/features/tracking/client/use-tracker";
 import { t } from "../i18n";
 import { initialState, playableSteps, progress, reduce, type QuizAction } from "../engine";
 
@@ -17,6 +19,8 @@ type Props = {
   bunnyHost?: string;
   // Rota do toast de compras; null no preview (sem domínio).
   purchasesEndpoint?: string | null;
+  // Ausente no preview: nada é rastreado nem enviado à Meta.
+  tracking?: { slug: string | null };
 };
 
 export function QuizPlayer({
@@ -27,6 +31,7 @@ export function QuizPlayer({
   locale,
   bunnyHost,
   purchasesEndpoint = null,
+  tracking,
 }: Props) {
   const steps = playableSteps(doc);
   const { allowBack, showProgress } = doc.settings;
@@ -38,6 +43,24 @@ export function QuizPlayer({
   const dispatch = useCallback((action: QuizAction) => rawDispatch(action), []);
   const mainRef = useRef<HTMLElement>(null);
   const firstRender = useRef(true);
+  const [lead, setLead] = useState<{ firstName?: string }>();
+  const tracker = useTracker({ enabled: Boolean(tracking), locale, slug: tracking?.slug ?? null, pixelId: doc.tracking.metaPixelId });
+  const { track } = tracker;
+
+  // Um evento por step exibido; quiz_start só na primeira vez da sessão de página.
+  const current = steps[Math.min(state.index, steps.length - 1)];
+  const trackedIndex = useRef<number | null>(null);
+  const started = useRef(false);
+  useEffect(() => {
+    if (!current || trackedIndex.current === state.index) return;
+    trackedIndex.current = state.index;
+    if (!started.current && state.index === 0) {
+      started.current = true;
+      void track("quiz_start", current.id);
+    }
+    void track("step_view", current.id);
+    if (current.type === "vsl") void track("vsl_view", current.id);
+  }, [state.index, current, track]);
 
   useEffect(() => {
     if (firstRender.current) {
@@ -88,14 +111,23 @@ export function QuizPlayer({
       <main ref={mainRef} key={step.id} className="flex flex-1 flex-col pt-6 [&_h1]:outline-none">
         <StepView
           step={step}
-          ctx={{ steps, answers: state.answers }}
+          ctx={{ steps, answers: state.answers, lead }}
           dispatch={dispatch}
           cloudName={cloudName}
           isFirst={index === 0}
           isLast={index === steps.length - 1}
-          runtime={{ locale, offers: doc.offers, embedded, bunnyHost, purchasesEndpoint }}
+          runtime={{
+            locale,
+            offers: doc.offers,
+            embedded,
+            bunnyHost,
+            purchasesEndpoint,
+            track,
+            onLead: (firstName) => setLead({ firstName }),
+          }}
         />
       </main>
+      {tracker.consent === "ask" && <ConsentBanner locale={locale} onChoose={tracker.choose} />}
     </div>
   );
 }

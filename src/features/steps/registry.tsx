@@ -1,22 +1,22 @@
-import type { ComponentType } from "react";
-import { StickyCta } from "@/features/runtime/components/quiz-button";
-import { t } from "@/features/runtime/i18n";
+import { lazy, Suspense, type ComponentType } from "react";
 import { InfoView } from "./info/info-view";
 import { LoadingView } from "./loading/loading-view";
 import { OfferTimerView } from "./offer-timer/offer-timer-view";
 import { QuestionView } from "./question/question-view";
+import { SocialProofView } from "./social-proof/social-proof-view";
 import { ResultView } from "./result/result-view";
 import type { Step, StepType } from "./schema";
 import type { StepViewProps } from "./step-view-props";
 import { VslView } from "./vsl/vsl-view";
 
-// Tipos ainda sem renderer (chegam nas próximas entregas) só deixam avançar.
-function PendingView({ step, dispatch, isLast, runtime }: StepViewProps) {
+// Formulário de lead em chunk separado: a validação de telefone pesa e só ele usa.
+const LeadFormView = lazy(() => import("./lead-form/lead-form-view"));
+
+function LazyLeadForm(props: StepViewProps<Extract<Step, { type: "leadForm" }>>) {
   return (
-    <>
-      <p className="opacity-60">{step.name}</p>
-      {!isLast && <StickyCta onClick={() => dispatch({ type: "next" })}>{t(runtime.locale, "continue")}</StickyCta>}
-    </>
+    <Suspense fallback={<div className="min-h-64" aria-busy />}>
+      <LeadFormView {...props} />
+    </Suspense>
   );
 }
 
@@ -25,8 +25,8 @@ const VIEWS: { [T in StepType]: ComponentType<StepViewProps<Extract<Step, { type
   info: InfoView,
   loading: LoadingView,
   result: ResultView,
-  socialProof: PendingView,
-  leadForm: PendingView,
+  socialProof: SocialProofView,
+  leadForm: LazyLeadForm,
   vsl: VslView,
   offerTimer: OfferTimerView,
 };

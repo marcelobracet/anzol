@@ -23,6 +23,12 @@ export function OfferTimerView({ step, ctx, runtime, dispatch, isLast }: StepVie
     return () => clearInterval(timer);
   }, [offer?.promo?.expiresAt]);
 
+  const onCta = () => {
+    if (!isLast || !offer) return dispatch({ type: "next" });
+    void runtime.track("checkout_click", step.id);
+    goToCheckout(offer, runtime.embedded);
+  };
+
   return (
     <div className="flex flex-1 flex-col">
       <div className="flex flex-1 flex-col items-center justify-center py-8 text-center">
@@ -46,7 +52,7 @@ export function OfferTimerView({ step, ctx, runtime, dispatch, isLast }: StepVie
       </div>
       {/* Antes de outro step (ex.: VSL) avança; como último step, leva ao checkout. */}
       {(!isLast || offer) && (
-        <StickyCta onClick={() => (isLast && offer ? goToCheckout(offer, runtime.embedded) : dispatch({ type: "next" }))}>
+        <StickyCta onClick={onCta}>
           {interpolate(step.ctaLabel, ctx)}
         </StickyCta>
       )}

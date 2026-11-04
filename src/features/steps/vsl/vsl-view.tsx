@@ -33,7 +33,10 @@ export function VslView({ step, ctx, runtime }: StepViewProps<VslStep>) {
       )}
       {showCta && offer && (
         <div className="mt-6">
-          <QuizButton className="animate-in fade-in zoom-in-95 bg-[var(--q-accent)]! text-lg text-[var(--q-on-accent)]!" onClick={() => goToCheckout(offer, runtime.embedded)}>
+          <QuizButton className="animate-in fade-in zoom-in-95 bg-[var(--q-accent)]! text-lg text-[var(--q-on-accent)]!" onClick={() => {
+              void runtime.track("checkout_click", step.id);
+              goToCheckout(offer, runtime.embedded);
+            }}>
             {interpolate(step.cta.label, ctx)}
           </QuizButton>
           {runtime.embedded && <p className="mt-1 text-center text-xs opacity-60">No ar, aparece aos {step.cta.showAt}s de vídeo assistido.</p>}
