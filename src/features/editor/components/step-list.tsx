@@ -6,12 +6,13 @@ import { CSS } from "@dnd-kit/utilities";
 import { Copy, Eye, EyeOff, GripVertical, Trash2 } from "lucide-react";
 import { useId, useState } from "react";
 import type { Step } from "@/features/steps/schema";
-import { ADDABLE_STEP_TYPES, STEP_TYPE_LABELS, type AddableStepType } from "../document-ops";
+import { ADDABLE_STEP_TYPES, OFFER_STEP_TYPES, STEP_TYPE_LABELS, type AddableStepType } from "../document-ops";
 
 type Props = {
   steps: Step[];
   selectedId: string | null;
   invalidIds: Set<string>;
+  hasOffers: boolean;
   onSelect: (id: string) => void;
   onMove: (fromId: string, toId: string) => void;
   onAdd: (type: AddableStepType) => void;
@@ -63,7 +64,7 @@ function StepRow({ step, index, selected, invalid, canRemove, ...actions }: {
   );
 }
 
-export function StepList({ steps, selectedId, invalidIds, onSelect, onMove, onAdd, ...actions }: Props) {
+export function StepList({ steps, selectedId, invalidIds, hasOffers, onSelect, onMove, onAdd, ...actions }: Props) {
   const [adding, setAdding] = useState(false);
   const dndId = useId(); // id estável evita divergência de hidratação no aria-describedby
 
@@ -101,7 +102,9 @@ export function StepList({ steps, selectedId, invalidIds, onSelect, onMove, onAd
             <button
               key={type}
               type="button"
-              className="rounded-md border bg-background px-2 py-1.5 text-xs hover:bg-muted"
+              disabled={OFFER_STEP_TYPES.has(type) && !hasOffers}
+              title={OFFER_STEP_TYPES.has(type) && !hasOffers ? "Crie uma oferta primeiro" : undefined}
+              className="rounded-md border bg-background px-2 py-1.5 text-xs hover:bg-muted disabled:opacity-40"
               onClick={() => {
                 onAdd(type);
                 setAdding(false);

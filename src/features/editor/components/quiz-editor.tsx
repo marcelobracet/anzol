@@ -1,6 +1,6 @@
 "use client";
 
-import { Paintbrush, Settings } from "lucide-react";
+import { Paintbrush, Settings, ShoppingCart } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { Badge } from "@/components/ui/badge";
@@ -18,25 +18,28 @@ import {
   updateTheme,
   type AddableStepType,
 } from "../document-ops";
+import { OffersForm } from "../forms/offers-form";
 import { StepForm } from "../forms/step-form";
 import { ThemeForm } from "../forms/theme-form";
+import { addOffer, offerInUse, removeOffer, updateOffer } from "../offer-ops";
 import { useAutosave } from "../use-autosave";
 import { Preview } from "./preview";
 import { PublishButton } from "./publish-button";
 import { StepList } from "./step-list";
 
 type Props = {
-  quiz: { id: string; name: string; status: string; draftDocument: QuizDocument; draftRevision: number };
+  quiz: { id: string; name: string; locale: string; status: string; draftDocument: QuizDocument; draftRevision: number };
   liveUrl: string | null;
   cloudName?: string;
+  bunnyHost?: string;
 };
 
 const STATUS_TEXT = { pending: "Alterações pendentes…", saving: "Salvando…", saved: "Salvo", error: "Erro ao salvar" } as const;
 
-export function QuizEditor({ quiz, liveUrl, cloudName }: Props) {
+export function QuizEditor({ quiz, liveUrl, cloudName, bunnyHost }: Props) {
   const [doc, setDoc] = useState(quiz.draftDocument);
   const [selectedId, setSelectedId] = useState<string | null>(doc.steps[0]?.id ?? null);
-  const [panel, setPanel] = useState<"step" | "theme">("step");
+  const [panel, setPanel] = useState<"step" | "theme" | "offers">("step");
   const [resetKey, setResetKey] = useState(0);
   const autosave = useAutosave(quiz.id, quiz.draftRevision);
 
@@ -86,16 +89,26 @@ export function QuizEditor({ quiz, liveUrl, cloudName }: Props) {
             className={`flex items-center gap-2 rounded-lg border bg-background px-3 py-2 text-sm ${panel === "theme" ? "border-primary ring-1 ring-primary" : ""}`}
           >
             <Paintbrush className="size-4" /> Tema e navegação
-            {issues._doc && <span className="text-destructive">●</span>}
+            {issues._doc?.some((i) => i.path[0] !== "offers") && <span className="text-destructive">●</span>}
+          </button>
+          <button
+            type="button"
+            onClick={() => setPanel("offers")}
+            className={`flex items-center gap-2 rounded-lg border bg-background px-3 py-2 text-sm ${panel === "offers" ? "border-primary ring-1 ring-primary" : ""}`}
+          >
+            <ShoppingCart className="size-4" /> Ofertas ({doc.offers.length})
+            {issues._doc?.some((i) => i.path[0] === "offers") && <span className="text-destructive">●</span>}
           </button>
           <StepList
             steps={doc.steps}
             selectedId={panel === "step" ? selectedId : null}
             invalidIds={invalidIds}
+            hasOffers={doc.offers.length > 0}
             onSelect={select}
             onMove={(from, to) => update(moveStep(doc, from, to))}
             onAdd={(type: AddableStepType) => {
               const result = addStep(doc, type, selectedId ?? undefined);
+              if (!result) return setPanel("offers");
               update(result.doc);
               select(result.id);
             }}
@@ -114,11 +127,20 @@ export function QuizEditor({ quiz, liveUrl, cloudName }: Props) {
         </aside>
 
         <section className="overflow-y-auto bg-muted/50 p-6">
-          <Preview document={doc} selectedId={selectedId} cloudName={cloudName} resetKey={resetKey} />
+          <Preview document={doc} selectedId={selectedId} cloudName={cloudName} bunnyHost={bunnyHost} locale={quiz.locale} resetKey={resetKey} />
         </section>
 
         <aside className="overflow-y-auto border-l bg-background p-4">
-          {panel === "theme" ? (
+          {panel === "offers" ? (
+            <OffersForm
+              offers={doc.offers}
+              issues={issues._doc}
+              inUse={(id) => offerInUse(doc, id)}
+              onAdd={() => update(addOffer(doc).doc)}
+              onChange={(offer) => update(updateOffer(doc, offer))}
+              onRemove={(id) => update(removeOffer(doc, id))}
+            />
+          ) : panel === "theme" ? (
             <ThemeForm
               theme={doc.theme}
               settings={doc.settings}
@@ -128,7 +150,7 @@ export function QuizEditor({ quiz, liveUrl, cloudName }: Props) {
               onSettings={(settings) => update(updateSettings(doc, settings))}
             />
           ) : selected ? (
-            <StepForm step={selected} issues={issues[selected.id]} cloudName={cloudName} onChange={(step: Step) => update(replaceStep(doc, step))} />
+            <StepForm step={selected} issues={issues[selected.id]} cloudName={cloudName} offers={doc.offers} onChange={(step: Step) => update(replaceStep(doc, step))} />
           ) : (
             <p className="text-sm text-muted-foreground">Selecione um step.</p>
           )}

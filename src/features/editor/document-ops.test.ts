@@ -19,20 +19,26 @@ const doc = demoDocument();
 const ids = (d: QuizDocument) => d.steps.map((s) => s.id);
 
 describe("defaultStep", () => {
-  it.each(ADDABLE_STEP_TYPES)("%s nasce válido", (type) => {
-    expect(Step.safeParse(defaultStep(type)).success).toBe(true);
+  it.each(ADDABLE_STEP_TYPES.filter((t) => t !== "vsl"))("%s nasce válido", (type) => {
+    expect(Step.safeParse(defaultStep(type, "offer_x")).success).toBe(true);
+  });
+
+  it("VSL nasce sem vídeo e só o vídeo fica inválido", () => {
+    const result = Step.safeParse(defaultStep("vsl", "offer_x"));
+    expect(result.success).toBe(false);
+    expect(result.error?.issues.every((i) => i.path[0] === "video")).toBe(true);
   });
 });
 
 describe("addStep", () => {
   it("insere depois do step indicado e devolve o id novo", () => {
-    const { doc: next, id } = addStep(doc, "info", "q_goal");
+    const { doc: next, id } = addStep(doc, "info", "q_goal")!;
     expect(ids(next).indexOf(id)).toBe(ids(doc).indexOf("q_goal") + 1);
     expect(next.steps).toHaveLength(doc.steps.length + 1);
   });
 
   it("sem referência insere no fim", () => {
-    const { doc: next, id } = addStep(doc, "question");
+    const { doc: next, id } = addStep(doc, "question")!;
     expect(ids(next).at(-1)).toBe(id);
   });
 

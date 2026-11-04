@@ -16,6 +16,8 @@ export type Theme = z.infer<typeof Theme>;
 export const Offer = z.object({
   id: Id,
   provider: z.enum(["hotmart", "kiwify"]),
+  // Liga a compra do webhook a esta oferta (e ao quiz).
+  productId: z.string().trim().min(1).max(64).optional(),
   fullPriceUrl: HttpsUrl,
   promo: z.object({ url: HttpsUrl, expiresAt: z.iso.datetime({ offset: true }) }).optional(),
 });

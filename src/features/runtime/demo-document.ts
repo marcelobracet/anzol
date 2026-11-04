@@ -81,3 +81,40 @@ export function demoDocument(): QuizDocument {
     ],
   });
 }
+
+// Demo da VSL em demo.localhost/vsl: timer com prazo real e VSL com CTA aos 3 s.
+export function demoVslDocument(): QuizDocument {
+  const base = demoDocument();
+  return QuizDocument.parse({
+    ...base,
+    offers: [
+      {
+        id: "offer_demo",
+        provider: "hotmart",
+        productId: "DEMO123",
+        fullPriceUrl: "https://pay.hotmart.com/DEMO123?checkoutMode=10",
+        promo: { url: "https://pay.hotmart.com/DEMO123?off=promo", expiresAt: "2099-01-01T00:00:00Z" },
+      },
+    ],
+    steps: [
+      {
+        id: "timer",
+        type: "offerTimer",
+        name: "Prazo",
+        offerId: "offer_demo",
+        title: "Sua condição especial termina em",
+        expiredText: "A condição especial terminou.",
+        ctaLabel: "Quero aproveitar",
+      },
+      {
+        id: "vsl_main",
+        type: "vsl",
+        name: "VSL",
+        headline: "Assista antes que saia do ar",
+        video: { kind: "video", libraryId: "demo", videoId: "demo-video" },
+        cta: { label: "Quero garantir minha vaga", showAt: 3, offerId: "offer_demo" },
+        toast: { enabled: true, leadSeconds: 2, windowHours: 48 },
+      },
+    ],
+  });
+}

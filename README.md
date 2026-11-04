@@ -21,7 +21,7 @@ Em `npm run dev` sem `SUPABASE_URL`, o Studio usa um armazenamento em memória (
 
 ### Ver o runtime sem banco
 
-Em `npm run dev`, http://demo.localhost:3000 serve um quiz de demonstração (`src/features/runtime/demo-document.ts`). Só existe em `next dev`; em build de produção e previews esse host vai ao banco como qualquer outro.
+Em `npm run dev`, http://demo.localhost:3000 serve um quiz de demonstração e http://demo.localhost:3000/vsl uma VSL com timer (`src/features/runtime/demo-document.ts`). Só existe em `next dev`; em build de produção e previews esse host vai ao banco como qualquer outro.
 
 ## Studio
 
@@ -36,6 +36,9 @@ Em `npm run dev`, http://demo.localhost:3000 serve um quiz de demonstração (`s
 - Lê só a versão publicada (`published_quiz()` no Postgres), nunca o rascunho.
 - Cache com `'use cache'` + tags `runtime:host:<host>` e `runtime:quiz:<id>`; publicar invalida as tags.
 - Imagens via Cloudinary (`CLOUDINARY_CLOUD_NAME`); GIFs são entregues como mp4.
+- VSL: HLS do Bunny Stream (`BUNNY_CDN_HOST`), hls.js carregado só quando precisa; barra 1-(1-x)^k; CTA aos `showAt` segundos assistidos (lembrado no localStorage).
+- Checkout: promo enquanto `expiresAt` não passa, senão preço cheio. `utm_*`, `src` e `sck` da URL do quiz substituem os do link; nada mais é repassado.
+- Toast de compras: `GET /api/t/purchases` (só no domínio da oferta) devolve primeiro nome, cidade e país de compras aprovadas reais.
 
 ## Verificação (tudo precisa estar verde)
 

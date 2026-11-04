@@ -14,5 +14,16 @@ export async function generateMetadata({ params }: PageProps<"/r/[host]/[[...slu
 
 export default async function QuizPage({ params }: PageProps<"/r/[host]/[[...slug]]">) {
   const quiz = await quizFromParams(params);
-  return <QuizPlayer document={quiz.document} cloudName={mediaEnv().CLOUDINARY_CLOUD_NAME} />;
+  const { slug } = await params;
+  const media = mediaEnv();
+  const purchasesEndpoint = slug?.[0] ? `/api/t/purchases?slug=${encodeURIComponent(slug[0])}` : "/api/t/purchases";
+  return (
+    <QuizPlayer
+      document={quiz.document}
+      locale={quiz.locale}
+      cloudName={media.CLOUDINARY_CLOUD_NAME}
+      bunnyHost={media.BUNNY_CDN_HOST}
+      purchasesEndpoint={purchasesEndpoint}
+    />
+  );
 }

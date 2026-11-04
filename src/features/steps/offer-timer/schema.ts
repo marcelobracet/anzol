@@ -7,5 +7,6 @@ export const OfferTimerStep = StepBase.extend({
   offerId: Id,
   title: Text.min(1),
   expiredText: Text.min(1),
+  ctaLabel: Text.min(1).default("Continuar"), // avança; se for o último step, vai ao checkout
 });
 export type OfferTimerStep = z.infer<typeof OfferTimerStep>;

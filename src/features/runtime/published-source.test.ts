@@ -36,5 +36,6 @@ describe("createDemoSource", () => {
     expect((await source.find("demo.localhost", null))?.slug).toBe("demo");
     expect(await source.find("outro.localhost", null)).toBeNull();
     expect(await source.find("demo.localhost", "x")).toBeNull();
+    expect((await source.find("demo.localhost", "vsl"))?.document.steps.map((s) => s.type)).toEqual(["offerTimer", "vsl"]);
   });
 });

@@ -7,14 +7,18 @@ import { errorAt, STEP_TYPE_LABELS } from "../document-ops";
 import type { StepFormProps } from "./form-props";
 import { InfoForm } from "./info-form";
 import { LoadingForm } from "./loading-form";
+import { OfferTimerForm } from "./offer-timer-form";
 import { QuestionForm } from "./question-form";
 import { ResultForm } from "./result-form";
+import { VslForm } from "./vsl-form";
 
 const FORMS: Partial<{ [T in StepType]: ComponentType<StepFormProps<Extract<Step, { type: T }>>> }> = {
   question: QuestionForm,
   info: InfoForm,
   loading: LoadingForm,
   result: ResultForm,
+  vsl: VslForm,
+  offerTimer: OfferTimerForm,
 };
 
 export function StepForm(props: StepFormProps) {

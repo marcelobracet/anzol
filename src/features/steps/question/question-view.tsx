@@ -1,16 +1,17 @@
 import { MediaView } from "@/features/media/components/media-view";
 import { StickyCta } from "@/features/runtime/components/quiz-button";
 import { canAdvance } from "@/features/runtime/engine";
+import { t } from "@/features/runtime/i18n";
 import { interpolate } from "@/features/runtime/interpolate";
 import type { StepViewProps } from "../step-view-props";
 import type { QuestionStep } from "./schema";
 
-export function QuestionView({ step, ctx, dispatch, cloudName }: StepViewProps<QuestionStep>) {
+export function QuestionView({ step, ctx, dispatch, cloudName, runtime }: StepViewProps<QuestionStep>) {
   const chosen = ctx.answers[step.id] ?? [];
   const { selection } = step;
   const multi = selection.mode === "multi";
   const showCta = selection.mode === "multi" || !selection.autoAdvance;
-  const ctaLabel = selection.mode === "multi" ? selection.ctaLabel : "Continuar";
+  const ctaLabel = selection.mode === "multi" ? selection.ctaLabel : t(runtime.locale, "continue");
 
   return (
     <>

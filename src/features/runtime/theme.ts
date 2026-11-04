@@ -24,6 +24,7 @@ export function themeStyle(theme: Theme): CSSProperties & Record<`--q-${string}`
     "--q-surface": colors.surface,
     "--q-text": colors.text,
     "--q-accent": colors.accent,
+    "--q-on-accent": readableOn(colors.accent),
     "--q-radius": `${theme.radius}px`,
   };
 }
