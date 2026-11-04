@@ -1,36 +1,35 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Anzol
 
-## Getting Started
+Plataforma interna para criar quizzes pré-VSL. Studio (privado) e Runtime (quizzes públicos) no mesmo app Next.js, separados por host em `src/proxy.ts`.
 
-First, run the development server:
+## Rodar local
 
 ```bash
+nvm use            # Node 24 (.nvmrc)
+npm install
+cp .env.example .env.local   # preencha; AUTH_DEV_BYPASS_EMAIL libera o Studio em localhost
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Com `STUDIO_HOST=localhost`, o Studio abre em http://localhost:3000. Domínios de oferta podem ser simulados com `*.localhost` (ex.: http://oferta.localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Banco: aplique `supabase/migrations/` no projeto Supabase.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Verificação (tudo precisa estar verde)
 
-## Learn More
+| Comando | Verde quando |
+|---|---|
+| `npm test` | todos os testes passam |
+| `npm run typecheck` | sem saída, exit 0 |
+| `npm run lint` | sem erros |
+| `npm run build` | build concluído sem erro |
 
-To learn more about Next.js, take a look at the following resources:
+## Roteamento
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+| Host | Comportamento |
+|---|---|
+| `STUDIO_HOST` | Studio; exige `Cf-Access-Jwt-Assertion` válido (team, AUD, RS256, e-mail na allowlist). `/api/webhooks/*` passa sem JWT (auth própria). |
+| `BLOCKED_HOSTS` e subdomínios | 404 sempre |
+| Qualquer outro | Runtime: reescrito para `/r/[host]/...`; Studio, webhooks e rotas internas dão 404 |
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+O bypass de auth (`AUTH_DEV_BYPASS_EMAIL`) só funciona em `next dev` e em previews da Vercel; produção ignora.
