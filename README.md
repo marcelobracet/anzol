@@ -15,9 +15,9 @@ Com `STUDIO_HOST=localhost`, o Studio abre em http://localhost:3000. Domínios d
 
 Banco: aplique `supabase/migrations/` no projeto Supabase, em ordem.
 
-### Usar o Studio sem banco
+### Usar tudo sem banco
 
-Em `npm run dev` sem `SUPABASE_URL`, o Studio usa um armazenamento em memória (some ao reiniciar) e simula o cadastro de domínio na Vercel. Só vale em `next dev`.
+Em `npm run dev` sem `SUPABASE_URL`, quizzes, domínios, eventos e compras ficam em memória (somem ao reiniciar) e o cadastro na Vercel é simulado. Dá para criar no Studio, publicar, ligar `oferta.localhost` e abrir http://oferta.localhost:3000. Só vale em `next dev`.
 
 ### Ver o runtime sem banco
 
@@ -58,3 +58,18 @@ Em `npm run dev`, http://demo.localhost:3000 serve um quiz de demonstração e h
 | Qualquer outro | Runtime: reescrito para `/r/[host]/...`; Studio, webhooks e rotas internas dão 404 |
 
 O bypass de auth (`AUTH_DEV_BYPASS_EMAIL`) só funciona em `next dev` e em previews da Vercel; produção ignora.
+
+## Rastreamento
+
+- `POST /api/t` (domínio da oferta): quiz_start, step_view, vsl_view, lead, checkout_click. Grava em `events` (único por `event_id`) e, para PageView, ViewContent, Lead e InitiateCheckout, chama a Conversions API com o **mesmo `event_id`** do `fbq` (a Meta deduplica). Limite de 60 eventos/min por IP por instância.
+- Consentimento: exigido quando o locale do quiz é europeu **ou** o IP é do EEE/UK/CH (`x-vercel-ip-country`, via `GET /api/t/geo`). Sem aceite, o Pixel não carrega e a CAPI não é chamada; o funil interno continua contando.
+- Lead: e-mail e telefone (E.164 com libphonenumber) validados no navegador e no servidor; na CAPI vão com SHA-256.
+- `META_CAPI_TOKEN` só no servidor.
+
+## Webhook Hotmart
+
+`POST https://<STUDIO_HOST>/api/webhooks/hotmart` com `X-HOTMART-HOTTOK` (= `HOTMART_HOTTOK`). No Cloudflare Access, crie a regra **Bypass** só para `/api/webhooks/*`. Idempotente por `order_id` (reembolso/chargeback só atualiza o status). Grava só primeiro nome, cidade e país. O quiz é achado pelo `productId` da oferta publicada.
+
+## Funil
+
+`/quizzes/<id>/funnel`: sessões únicas por step da versão publicada, cliques no checkout e compras aprovadas; 7/30/90 dias, versão atual ou todas.

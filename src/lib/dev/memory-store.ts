@@ -1,8 +1,9 @@
 import "server-only";
-import { createInMemoryDomainRepository } from "@/features/domains/in-memory-repository";
-import type { DomainRepository } from "@/features/domains/repository";
+import { createInMemoryDomainRepository, type InMemoryDomainRepository } from "@/features/domains/in-memory-repository";
 import { createInMemoryQuizRepository } from "@/features/quiz/in-memory-repository";
 import type { QuizRepository } from "@/features/quiz/repository";
+import { createInMemoryTrackingRepository } from "@/features/tracking/in-memory-repository";
+import { createInMemoryPurchaseStore } from "@/features/webhooks/in-memory-purchases";
 
 // Só em `next dev` sem Supabase configurado: permite usar o Studio localmente. Some ao reiniciar.
 export function devMemoryEnabled(): boolean {
@@ -13,13 +14,23 @@ export function devMemoryEnabled(): boolean {
   );
 }
 
-type Store = { quizzes: QuizRepository; domains: DomainRepository };
+type Store = {
+  quizzes: QuizRepository;
+  domains: InMemoryDomainRepository;
+  tracking: ReturnType<typeof createInMemoryTrackingRepository>;
+  purchases: ReturnType<typeof createInMemoryPurchaseStore>;
+};
 const globalStore = globalThis as typeof globalThis & { __anzolDevStore?: Store };
 
 export function devMemoryStore(): Store {
-  globalStore.__anzolDevStore ??= {
-    quizzes: createInMemoryQuizRepository(),
-    domains: createInMemoryDomainRepository(),
-  };
+  if (!globalStore.__anzolDevStore) {
+    const quizzes = createInMemoryQuizRepository();
+    globalStore.__anzolDevStore = {
+      quizzes,
+      domains: createInMemoryDomainRepository(),
+      tracking: createInMemoryTrackingRepository(),
+      purchases: createInMemoryPurchaseStore(quizzes),
+    };
+  }
   return globalStore.__anzolDevStore;
 }

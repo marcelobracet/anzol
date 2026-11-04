@@ -14,7 +14,7 @@ export type RouteDecision =
 const HOST_PATTERN = /^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)*$/;
 const NOT_FOUND: RouteDecision = { kind: "not-found" };
 // Allowlist exata: domínios de oferta só expõem estas rotas de API.
-const RUNTIME_API_PATHS = ["/api/t", "/api/t/purchases"];
+const RUNTIME_API_PATHS = ["/api/t", "/api/t/purchases", "/api/t/geo"];
 
 export function normalizeHost(raw: string | null | undefined): string | null {
   if (!raw) return null;

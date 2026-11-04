@@ -4,7 +4,16 @@ import type { Step, StepType } from "@/features/steps/schema";
 import { newId } from "@/features/steps/shared/primitives";
 
 // Tipos com renderer no runtime. Os demais entram junto com as entregas deles.
-export const ADDABLE_STEP_TYPES = ["question", "info", "loading", "result", "vsl", "offerTimer"] as const satisfies StepType[];
+export const ADDABLE_STEP_TYPES = [
+  "question",
+  "info",
+  "socialProof",
+  "loading",
+  "leadForm",
+  "result",
+  "vsl",
+  "offerTimer",
+] as const satisfies StepType[];
 export type AddableStepType = (typeof ADDABLE_STEP_TYPES)[number];
 // Precisam de uma oferta existente para apontar.
 export const OFFER_STEP_TYPES: ReadonlySet<StepType> = new Set(["vsl", "offerTimer"]);
@@ -21,6 +30,7 @@ export const STEP_TYPE_LABELS: Record<StepType, string> = {
 };
 
 export function defaultStep(type: AddableStepType, offerId = ""): Step {
+  // Os tipos podem nascer incompletos (ex.: sem itens); o editor mostra o que falta.
   const base = { id: newId(), hidden: false };
   switch (type) {
     case "question":
@@ -51,6 +61,22 @@ export function defaultStep(type: AddableStepType, offerId = ""): Step {
         variants: [],
         fallback: { title: "Seu resultado" },
         ctaLabel: "Continuar",
+      };
+    case "socialProof":
+      // Nasce sem depoimentos: o editor marca a lista até o primeiro upload.
+      return { ...base, type, name: "Prova social", title: "Quem já fez, aprova", layout: "carousel", items: [], ctaLabel: "Continuar" };
+    case "leadForm":
+      return {
+        ...base,
+        type,
+        name: "Captura de lead",
+        title: "Para onde enviamos seu resultado?",
+        fields: {
+          name: { enabled: true, required: true, label: "Nome" },
+          email: { enabled: true, required: true, label: "E-mail" },
+          phone: { enabled: false, required: false, label: "WhatsApp" },
+        },
+        ctaLabel: "Ver meu resultado",
       };
     case "vsl":
       // Nasce sem vídeo: o editor marca o campo até ser preenchido.

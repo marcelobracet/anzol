@@ -166,3 +166,17 @@ describe("publish", () => {
     expect((await service.publish(quiz.id, quiz.draftRevision, USER, NOW)).success).toBe(false);
   });
 });
+
+describe("findVersion", () => {
+  it("devolve o documento congelado da versão publicada", async () => {
+    const quiz = await createOk();
+    const saved = await service.saveDraft(quiz.id, QuizDocument.parse(fullDocumentInput()), quiz.draftRevision);
+    if (!saved.success) throw new Error(saved.error);
+    const published = await service.publish(quiz.id, saved.data.draftRevision, USER, new Date("2026-11-04T12:00:00Z"));
+    if (!published.success) throw new Error(published.error);
+    const version = await service.findVersion(published.data.versionId);
+    expect(version).toMatchObject({ id: published.data.versionId, quizId: quiz.id, versionNumber: 1 });
+    expect(version?.document.steps).toHaveLength(saved.data.draftDocument.steps.length);
+    expect(await service.findVersion("00000000-0000-4000-8000-000000000000")).toBeNull();
+  });
+});

@@ -67,3 +67,14 @@ const VercelEnvSchema = z.object({
   VERCEL_TEAM_ID: z.string().min(1).optional(),
 });
 export const vercelApiEnv = () => parse(VercelEnvSchema, "vercel");
+
+const TrackingEnvSchema = z.object({
+  // Token da Conversions API: só no servidor, nunca em NEXT_PUBLIC_*.
+  META_CAPI_TOKEN: z.string().min(20).optional(),
+});
+export const trackingEnv = () => parse(TrackingEnvSchema, "tracking");
+
+const WebhookEnvSchema = z.object({
+  HOTMART_HOTTOK: z.string().min(10),
+});
+export const webhookEnv = () => parse(WebhookEnvSchema, "webhook");

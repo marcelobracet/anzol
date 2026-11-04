@@ -1,7 +1,11 @@
 import type { DomainRepository } from "./repository";
 
 // Implementação para testes. Mesmo contrato da versão Supabase.
-export function createInMemoryDomainRepository(): DomainRepository {
+export type InMemoryDomainRepository = DomainRepository & {
+  quizzesForHost(host: string): Promise<{ defaultQuizId: string | null; linkedQuizIds: string[] }>;
+};
+
+export function createInMemoryDomainRepository(): InMemoryDomainRepository {
   let defaults: Record<string, string | null> = {};
   let links: { host: string; quizId: string }[] = [];
 
@@ -18,6 +22,9 @@ export function createInMemoryDomainRepository(): DomainRepository {
       return links
         .filter((l) => l.quizId === quizId)
         .map(({ host }) => ({ host, isDefault: defaults[host] === quizId }));
+    },
+    async quizzesForHost(host) {
+      return { defaultQuizId: defaults[host] ?? null, linkedQuizIds: links.filter((l) => l.host === host).map((l) => l.quizId) };
     },
     async hostsForQuiz(quizId) {
       const hosts = [

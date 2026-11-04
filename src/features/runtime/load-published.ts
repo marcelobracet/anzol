@@ -1,7 +1,9 @@
 import "server-only";
 import { cacheLife, cacheTag } from "next/cache";
+import { devMemoryEnabled, devMemoryStore } from "@/lib/dev/memory-store";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { createDemoSource, DEMO_HOST, type PublishedQuiz } from "./published-source";
+import { createRepositorySource } from "./repository-source";
 import { runtimeTags } from "./runtime-tags";
 import { createSupabaseSource } from "./supabase-source";
 
@@ -14,7 +16,12 @@ export async function loadPublishedQuiz(host: string, slug: string | null): Prom
   cacheTag(runtimeTags.host(host));
   cacheLife("days");
 
-  const source = host === DEMO_HOST && demoEnabled() ? createDemoSource() : createSupabaseSource(supabaseAdmin());
+  const source =
+    host === DEMO_HOST && demoEnabled()
+      ? createDemoSource()
+      : devMemoryEnabled()
+        ? createRepositorySource(devMemoryStore().quizzes, devMemoryStore().domains)
+        : createSupabaseSource(supabaseAdmin());
   const quiz = await source.find(host, slug);
   if (quiz) cacheTag(runtimeTags.quiz(quiz.quizId));
   return quiz;

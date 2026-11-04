@@ -61,6 +61,9 @@ export const QuizDocument = z
     settings: z
       .object({ showProgress: z.boolean().default(true), allowBack: z.boolean().default(true) })
       .default({ showProgress: true, allowBack: true }),
+    tracking: z
+      .object({ metaPixelId: z.string().regex(/^\d{5,20}$/, "Pixel ID: só números").optional() })
+      .default({}),
     steps: z.array(Step).min(1).max(60),
   })
   .superRefine((doc, ctx) => {

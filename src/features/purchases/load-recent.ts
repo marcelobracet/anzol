@@ -1,6 +1,6 @@
 import "server-only";
 import { cacheLife, cacheTag } from "next/cache";
-import { devMemoryEnabled } from "@/lib/dev/memory-store";
+import { devMemoryEnabled, devMemoryStore } from "@/lib/dev/memory-store";
 import { supabaseAdmin } from "@/lib/supabase/server";
 
 export const purchasesTag = (quizId: string) => `purchases:${quizId}`;
@@ -11,8 +11,14 @@ export async function loadRecentPurchaseRows(quizId: string, hours: number): Pro
   cacheTag(purchasesTag(quizId));
   cacheLife({ stale: 30, revalidate: 60, expire: 300 });
 
-  if (devMemoryEnabled()) return [];
   const since = new Date(Date.now() - hours * 3_600_000).toISOString();
+  if (devMemoryEnabled()) {
+    return devMemoryStore()
+      .purchases.rows.filter((p) => p.quizId === quizId && p.status === "approved" && p.createdAt >= since)
+      .map((p) => ({ first_name: p.firstName, city: p.city, country: p.country, created_at: p.createdAt }))
+      .reverse()
+      .slice(0, 10);
+  }
   const { data, error } = await supabaseAdmin()
     .from("purchases")
     .select("first_name, city, country, created_at")

@@ -16,6 +16,7 @@ export class RevisionConflictError extends Error {
 }
 
 export type PublishedVersion = { versionId: string; versionNumber: number };
+export type QuizVersion = { id: string; quizId: string; versionNumber: number; document: QuizDocument; createdAt: string };
 
 export interface QuizRepository {
   list(): Promise<QuizSummary[]>;
@@ -29,4 +30,5 @@ export interface QuizRepository {
   /** Congela o rascunho da revisão `expectedRevision` como nova versão publicada. @throws RevisionConflictError */
   publish(id: string, expectedRevision: number, createdBy: string): Promise<PublishedVersion>;
   archive(id: string): Promise<boolean>;
+  findVersion(versionId: string): Promise<QuizVersion | null>;
 }

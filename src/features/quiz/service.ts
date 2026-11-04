@@ -85,6 +85,10 @@ export function createQuizService(repo: QuizRepository) {
       }
     },
 
+    findVersion(versionId: string) {
+      return repo.findVersion(versionId);
+    },
+
     async archive(id: string): Promise<Result<null>> {
       return (await repo.archive(id)) ? { success: true, data: null } : NOT_FOUND;
     },
