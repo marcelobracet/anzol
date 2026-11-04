@@ -6,15 +6,21 @@ import { MediaView } from "@/features/media/components/media-view";
 import { StepView } from "@/features/steps/registry";
 import { initialState, playableSteps, progress, reduce, type QuizAction } from "../engine";
 
-type Props = { document: QuizDocument; cloudName?: string };
+type Props = {
+  document: QuizDocument;
+  cloudName?: string;
+  // Preview do Studio: começa no step escolhido e não mexe no scroll da janela.
+  initialStepId?: string;
+  embedded?: boolean;
+};
 
-export function QuizPlayer({ document: doc, cloudName }: Props) {
+export function QuizPlayer({ document: doc, cloudName, initialStepId, embedded = false }: Props) {
   const steps = playableSteps(doc);
   const { allowBack, showProgress } = doc.settings;
   const [state, rawDispatch] = useReducer(
     (s: ReturnType<typeof initialState>, a: QuizAction) => reduce(s, a, steps, { allowBack }),
     undefined,
-    initialState,
+    () => ({ ...initialState(), index: Math.max(0, steps.findIndex((s) => s.id === initialStepId)) }),
   );
   const dispatch = useCallback((action: QuizAction) => rawDispatch(action), []);
   const mainRef = useRef<HTMLElement>(null);
@@ -25,17 +31,21 @@ export function QuizPlayer({ document: doc, cloudName }: Props) {
       firstRender.current = false;
       return;
     }
-    window.scrollTo({ top: 0 });
+    if (embedded) mainRef.current?.closest("[data-preview-scroll]")?.scrollTo({ top: 0 });
+    else window.scrollTo({ top: 0 });
     const heading = mainRef.current?.querySelector("h1");
     heading?.setAttribute("tabindex", "-1");
     heading?.focus({ preventScroll: true });
-  }, [state.index]);
+  }, [state.index, embedded]);
 
-  const step = steps[state.index];
-  const canGoBack = allowBack && state.index > 0 && step.type !== "loading";
+  // No preview o documento muda por baixo: o índice pode ficar além do fim.
+  const index = Math.min(state.index, steps.length - 1);
+  const step = steps[index];
+  if (!step) return null;
+  const canGoBack = allowBack && index > 0 && step.type !== "loading";
 
   return (
-    <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col px-4">
+    <div className={`mx-auto flex w-full max-w-md flex-col px-4 ${embedded ? "min-h-full" : "min-h-dvh"}`}>
       <header className="flex h-14 items-center gap-3">
         <button
           type="button"
@@ -58,7 +68,7 @@ export function QuizPlayer({ document: doc, cloudName }: Props) {
         <div className="h-1.5 w-full overflow-hidden rounded-full bg-[var(--q-surface)]" aria-hidden>
           <div
             className="h-full rounded-full bg-[var(--q-primary)] transition-[width] duration-300"
-            style={{ width: `${Math.round(progress(state, steps) * 100)}%` }}
+            style={{ width: `${Math.round(progress({ ...state, index }, steps) * 100)}%` }}
           />
         </div>
       )}
@@ -68,8 +78,8 @@ export function QuizPlayer({ document: doc, cloudName }: Props) {
           ctx={{ steps, answers: state.answers }}
           dispatch={dispatch}
           cloudName={cloudName}
-          isFirst={state.index === 0}
-          isLast={state.index === steps.length - 1}
+          isFirst={index === 0}
+          isLast={index === steps.length - 1}
         />
       </main>
     </div>

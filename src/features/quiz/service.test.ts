@@ -116,3 +116,53 @@ describe("archive", () => {
     expect(await service.list()).toEqual([]);
   });
 });
+
+describe("publish", () => {
+  const NOW = new Date("2026-11-04T12:00:00Z");
+
+  async function createPublishable() {
+    const quiz = await createOk();
+    const saved = await service.saveDraft(quiz.id, QuizDocument.parse(fullDocumentInput()), quiz.draftRevision);
+    if (!saved.success) throw new Error(saved.error);
+    return saved.data;
+  }
+
+  it("publica o rascunho como versão 1 e marca o quiz como publicado", async () => {
+    const quiz = await createPublishable();
+    const result = await service.publish(quiz.id, quiz.draftRevision, USER, NOW);
+    expect(result).toMatchObject({ success: true, data: { versionNumber: 1 } });
+    const after = await service.findById(quiz.id);
+    expect(after).toMatchObject({ status: "published" });
+    expect(after?.publishedVersionId).toBe(result.success ? result.data.versionId : "");
+  });
+
+  it("cada publicação cria a próxima versão", async () => {
+    const quiz = await createPublishable();
+    await service.publish(quiz.id, quiz.draftRevision, USER, NOW);
+    const second = await service.publish(quiz.id, quiz.draftRevision, USER, NOW);
+    expect(second).toMatchObject({ success: true, data: { versionNumber: 2 } });
+  });
+
+  it("bloqueia rascunho que não passa nas regras de publicação", async () => {
+    const quiz = await createOk(); // documento inicial termina num step info
+    const result = await service.publish(quiz.id, quiz.draftRevision, USER, NOW);
+    expect(result.success).toBe(false);
+    expect(!result.success && result.error).toMatch(/último step/i);
+  });
+
+  it("recusa publicar uma revisão que não é a atual", async () => {
+    const quiz = await createPublishable();
+    const result = await service.publish(quiz.id, quiz.draftRevision - 1, USER, NOW);
+    expect(result).toEqual({ success: false, error: "O rascunho foi alterado por outra pessoa. Recarregue." });
+  });
+
+  it("quiz inexistente ou arquivado", async () => {
+    expect(await service.publish("00000000-0000-4000-8000-000000000000", 1, USER, NOW)).toEqual({
+      success: false,
+      error: "Quiz não encontrado",
+    });
+    const quiz = await createPublishable();
+    await service.archive(quiz.id);
+    expect((await service.publish(quiz.id, quiz.draftRevision, USER, NOW)).success).toBe(false);
+  });
+});
