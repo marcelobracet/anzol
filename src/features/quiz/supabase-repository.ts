@@ -100,6 +100,15 @@ export function createSupabaseQuizRepository(db: SupabaseClient): QuizRepository
       return toRecord(data);
     },
 
+    async publish(id, expectedRevision, createdBy) {
+      const { data, error } = await db
+        .rpc("publish_quiz", { p_quiz_id: id, p_expected_revision: expectedRevision, p_created_by: createdBy })
+        .single<{ version_id: string; version_number: number }>();
+      if (error?.message.includes("revision_conflict")) throw new RevisionConflictError();
+      if (error) fail(error);
+      return { versionId: data.version_id, versionNumber: data.version_number };
+    },
+
     async archive(id) {
       const { data, error } = await quizzes()
         .update({ status: "archived", updated_at: new Date().toISOString() })

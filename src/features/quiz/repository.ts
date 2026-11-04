@@ -15,6 +15,8 @@ export class RevisionConflictError extends Error {
   }
 }
 
+export type PublishedVersion = { versionId: string; versionNumber: number };
+
 export interface QuizRepository {
   list(): Promise<QuizSummary[]>;
   findById(id: string): Promise<QuizRecord | null>;
@@ -24,5 +26,7 @@ export interface QuizRepository {
   updateMeta(id: string, meta: QuizMetaInput): Promise<QuizRecord | null>;
   /** Salva só se a revisão atual for `expectedRevision`. @throws RevisionConflictError */
   saveDraft(id: string, document: QuizDocument, expectedRevision: number): Promise<QuizRecord>;
+  /** Congela o rascunho da revisão `expectedRevision` como nova versão publicada. @throws RevisionConflictError */
+  publish(id: string, expectedRevision: number, createdBy: string): Promise<PublishedVersion>;
   archive(id: string): Promise<boolean>;
 }

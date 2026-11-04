@@ -6,6 +6,7 @@ import type { QuizRecord } from "./types";
 // Implementação para testes. Mesmo contrato da versão Supabase.
 export function createInMemoryQuizRepository(): QuizRepository {
   let rows: QuizRecord[] = [];
+  let versions: { id: string; quizId: string; versionNumber: number; document: unknown }[] = [];
   const now = () => new Date().toISOString();
   const slugTaken = (slug: string, exceptId?: string) =>
     rows.some((r) => r.slug === slug && r.id !== exceptId);
@@ -53,6 +54,17 @@ export function createInMemoryQuizRepository(): QuizRepository {
       };
       rows = rows.map((r) => (r.id === id ? updated : r));
       return updated;
+    },
+    async publish(id, expectedRevision) {
+      const current = rows.find((r) => r.id === id);
+      if (!current || current.status === "archived" || current.draftRevision !== expectedRevision) {
+        throw new RevisionConflictError();
+      }
+      const versionNumber = versions.filter((v) => v.quizId === id).length + 1;
+      const version = { id: randomUUID(), quizId: id, versionNumber, document: structuredClone(current.draftDocument) };
+      versions = [...versions, version];
+      rows = rows.map((r) => (r.id === id ? { ...r, status: "published" as const, publishedVersionId: version.id } : r));
+      return { versionId: version.id, versionNumber };
     },
     async archive(id) {
       const exists = rows.some((r) => r.id === id);

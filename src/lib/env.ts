@@ -51,3 +51,17 @@ const MediaEnvSchema = z.object({
 });
 export type MediaEnv = z.infer<typeof MediaEnvSchema>;
 export const mediaEnv = (): MediaEnv => parse(MediaEnvSchema, "media");
+
+const CloudinaryUploadEnvSchema = z.object({
+  CLOUDINARY_CLOUD_NAME: z.string().regex(/^[a-z0-9_-]+$/i),
+  CLOUDINARY_API_KEY: z.string().min(1),
+  CLOUDINARY_API_SECRET: z.string().min(1),
+});
+export const cloudinaryUploadEnv = () => parse(CloudinaryUploadEnvSchema, "cloudinary");
+
+const VercelEnvSchema = z.object({
+  VERCEL_API_TOKEN: z.string().min(1),
+  VERCEL_PROJECT_ID: z.string().min(1),
+  VERCEL_TEAM_ID: z.string().min(1).optional(),
+});
+export const vercelApiEnv = () => parse(VercelEnvSchema, "vercel");

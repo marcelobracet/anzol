@@ -15,9 +15,20 @@ Com `STUDIO_HOST=localhost`, o Studio abre em http://localhost:3000. Domínios d
 
 Banco: aplique `supabase/migrations/` no projeto Supabase, em ordem.
 
+### Usar o Studio sem banco
+
+Em `npm run dev` sem `SUPABASE_URL`, o Studio usa um armazenamento em memória (some ao reiniciar) e simula o cadastro de domínio na Vercel. Só vale em `next dev`.
+
 ### Ver o runtime sem banco
 
 Em `npm run dev`, http://demo.localhost:3000 serve um quiz de demonstração (`src/features/runtime/demo-document.ts`). Só existe em `next dev`; em build de produção e previews esse host vai ao banco como qualquer outro.
+
+## Studio
+
+- `/quizzes/<id>`: editor em 3 colunas (steps com arrastar, preview no player real, propriedades/tema). Salva sozinho (debounce, lock otimista por `draft_revision`); rascunho inválido não é salvo.
+- Publicar congela a revisão atual em `quiz_versions` (`publish_quiz()`, migration 0003) e invalida as tags do runtime.
+- `/quizzes/<id>/settings`: dados, domínios (cadastro automático na Vercel via `VERCEL_API_TOKEN`), duplicar e arquivar.
+- Upload: assinatura no servidor (`CLOUDINARY_API_KEY/SECRET`), envio direto do browser ao Cloudinary.
 
 ## Runtime
 

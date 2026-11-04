@@ -1,9 +1,11 @@
+import { validateForPublish } from "./document/publish-rules";
 import { createEmptyDocument, parseDocument } from "./document/schema";
-import { RevisionConflictError, SlugTakenError, type QuizRepository } from "./repository";
+import { RevisionConflictError, SlugTakenError, type PublishedVersion, type QuizRepository } from "./repository";
 import { QuizMetaInput, type QuizRecord, type QuizSummary, type Result } from "./types";
 
 const NOT_FOUND = { success: false, error: "Quiz não encontrado" } as const;
 const SLUG_TAKEN = { success: false, error: "Esse slug já está em uso" } as const;
+const CONFLICT = { success: false, error: "O rascunho foi alterado por outra pessoa. Recarregue." } as const;
 
 function parseMeta(input: unknown): Result<QuizMetaInput> {
   const result = QuizMetaInput.safeParse(input);
@@ -63,9 +65,22 @@ export function createQuizService(repo: QuizRepository) {
       try {
         return { success: true, data: await repo.saveDraft(id, parsed.data, expectedRevision) };
       } catch (error) {
-        if (error instanceof RevisionConflictError) {
-          return { success: false, error: "O rascunho foi alterado por outra pessoa. Recarregue." };
-        }
+        if (error instanceof RevisionConflictError) return CONFLICT;
+        throw error;
+      }
+    },
+
+    // Publica exatamente a revisão que o usuário está vendo; regras de publicação valem aqui.
+    async publish(id: string, expectedRevision: number, user: string, now = new Date()): Promise<Result<PublishedVersion>> {
+      const quiz = await repo.findById(id);
+      if (!quiz || quiz.status === "archived") return NOT_FOUND;
+      if (quiz.draftRevision !== expectedRevision) return CONFLICT;
+      const issues = validateForPublish(quiz.draftDocument, now);
+      if (issues.length > 0) return { success: false, error: issues.map((i) => i.message).join(" · ") };
+      try {
+        return { success: true, data: await repo.publish(id, expectedRevision, user) };
+      } catch (error) {
+        if (error instanceof RevisionConflictError) return CONFLICT;
         throw error;
       }
     },

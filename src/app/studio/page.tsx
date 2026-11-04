@@ -11,7 +11,7 @@ export default async function StudioHome() {
   const quizzes = await quizService().list();
 
   return (
-    <div className="grid gap-8">
+    <div className="mx-auto grid max-w-5xl gap-8 px-4 py-8">
       <Card>
         <CardHeader><CardTitle>Novo quiz</CardTitle></CardHeader>
         <CardContent>
