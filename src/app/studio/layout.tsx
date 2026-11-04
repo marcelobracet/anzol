@@ -1,6 +1,10 @@
 import type { Metadata } from "next";
+import { Geist } from "next/font/google";
 import Link from "next/link";
 import { requireStudioUser } from "@/features/auth/require-studio-user";
+import "../globals.css";
+
+const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 
 // Studio é privado e sempre lê o JWT do request: renderiza bloqueando, sem static shell.
 export const instant = false;
@@ -10,18 +14,23 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
+// Root layout do Studio. O runtime tem o próprio (lang e tema vêm do quiz).
 export default async function StudioLayout({ children }: LayoutProps<"/studio">) {
   const { email } = await requireStudioUser();
 
   return (
-    <div className="min-h-screen bg-muted/30">
-      <header className="border-b bg-background">
-        <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4">
-          <Link href="/" className="font-semibold tracking-tight">Anzol Studio</Link>
-          <span className="text-sm text-muted-foreground">{email}</span>
+    <html lang="pt-BR" className={`${geistSans.variable} h-full antialiased`}>
+      <body className="min-h-full">
+        <div className="min-h-screen bg-muted/30">
+          <header className="border-b bg-background">
+            <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4">
+              <Link href="/" className="font-semibold tracking-tight">Anzol Studio</Link>
+              <span className="text-sm text-muted-foreground">{email}</span>
+            </div>
+          </header>
+          <main className="mx-auto max-w-5xl px-4 py-8">{children}</main>
         </div>
-      </header>
-      <main className="mx-auto max-w-5xl px-4 py-8">{children}</main>
-    </div>
+      </body>
+    </html>
   );
 }
