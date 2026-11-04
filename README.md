@@ -13,7 +13,18 @@ npm run dev
 
 Com `STUDIO_HOST=localhost`, o Studio abre em http://localhost:3000. Domínios de oferta podem ser simulados com `*.localhost` (ex.: http://oferta.localhost:3000).
 
-Banco: aplique `supabase/migrations/` no projeto Supabase.
+Banco: aplique `supabase/migrations/` no projeto Supabase, em ordem.
+
+### Ver o runtime sem banco
+
+Em `npm run dev`, http://demo.localhost:3000 serve um quiz de demonstração (`src/features/runtime/demo-document.ts`). Só existe em `next dev`; em build de produção e previews esse host vai ao banco como qualquer outro.
+
+## Runtime
+
+- Rota interna `/r/[host]/[[...slug]]`: raiz do domínio = `domains.default_quiz_id`; `/{slug}` = quiz ligado ao domínio em `quiz_domains`.
+- Lê só a versão publicada (`published_quiz()` no Postgres), nunca o rascunho.
+- Cache com `'use cache'` + tags `runtime:host:<host>` e `runtime:quiz:<id>`; publicar invalida as tags.
+- Imagens via Cloudinary (`CLOUDINARY_CLOUD_NAME`); GIFs são entregues como mp4.
 
 ## Verificação (tudo precisa estar verde)
 

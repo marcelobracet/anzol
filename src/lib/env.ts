@@ -45,3 +45,9 @@ function parse<T extends z.ZodType>(schema: T, group: string): z.infer<T> {
 export const authEnv = (): AuthEnv => parse(AuthEnvSchema, "auth");
 export const routingEnv = (): RoutingEnv => parse(RoutingEnvSchema, "routing");
 export const databaseEnv = (): DatabaseEnv => parse(DatabaseEnvSchema, "database");
+
+const MediaEnvSchema = z.object({
+  CLOUDINARY_CLOUD_NAME: z.string().regex(/^[a-z0-9_-]+$/i).optional(),
+});
+export type MediaEnv = z.infer<typeof MediaEnvSchema>;
+export const mediaEnv = (): MediaEnv => parse(MediaEnvSchema, "media");
