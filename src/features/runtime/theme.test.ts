@@ -20,6 +20,7 @@ describe("themeStyle", () => {
       "--q-surface": "#F4F4F5",
       "--q-text": "#18181B",
       "--q-accent": "#F59E0B",
+      "--q-on-accent": "#000000",
       "--q-radius": "12px",
     });
   });

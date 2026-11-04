@@ -4,6 +4,7 @@ import { useCallback, useEffect, useReducer, useRef } from "react";
 import type { QuizDocument } from "@/features/quiz/document/schema";
 import { MediaView } from "@/features/media/components/media-view";
 import { StepView } from "@/features/steps/registry";
+import { t } from "../i18n";
 import { initialState, playableSteps, progress, reduce, type QuizAction } from "../engine";
 
 type Props = {
@@ -12,9 +13,21 @@ type Props = {
   // Preview do Studio: começa no step escolhido e não mexe no scroll da janela.
   initialStepId?: string;
   embedded?: boolean;
+  locale: string;
+  bunnyHost?: string;
+  // Rota do toast de compras; null no preview (sem domínio).
+  purchasesEndpoint?: string | null;
 };
 
-export function QuizPlayer({ document: doc, cloudName, initialStepId, embedded = false }: Props) {
+export function QuizPlayer({
+  document: doc,
+  cloudName,
+  initialStepId,
+  embedded = false,
+  locale,
+  bunnyHost,
+  purchasesEndpoint = null,
+}: Props) {
   const steps = playableSteps(doc);
   const { allowBack, showProgress } = doc.settings;
   const [state, rawDispatch] = useReducer(
@@ -50,7 +63,7 @@ export function QuizPlayer({ document: doc, cloudName, initialStepId, embedded =
         <button
           type="button"
           onClick={() => dispatch({ type: "back" })}
-          aria-label="Voltar"
+          aria-label={t(locale, "back")}
           className={`-ml-2 grid size-10 place-items-center rounded-full text-xl ${canGoBack ? "" : "invisible"}`}
         >
           ←
@@ -80,6 +93,7 @@ export function QuizPlayer({ document: doc, cloudName, initialStepId, embedded =
           cloudName={cloudName}
           isFirst={index === 0}
           isLast={index === steps.length - 1}
+          runtime={{ locale, offers: doc.offers, embedded, bunnyHost, purchasesEndpoint }}
         />
       </main>
     </div>

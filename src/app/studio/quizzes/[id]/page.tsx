@@ -20,11 +20,13 @@ export default async function QuizEditorPage({ params }: PageProps<"/studio/quiz
   const live = quiz.status === "published" ? domains[0] : undefined;
   const liveUrl = live ? `https://${live.host}${live.isDefault ? "/" : `/${quiz.slug}`}` : null;
 
+  const media = mediaEnv();
   return (
     <QuizEditor
-      quiz={{ id: quiz.id, name: quiz.name, status: quiz.status, draftDocument: quiz.draftDocument, draftRevision: quiz.draftRevision }}
+      quiz={{ id: quiz.id, name: quiz.name, locale: quiz.locale, status: quiz.status, draftDocument: quiz.draftDocument, draftRevision: quiz.draftRevision }}
       liveUrl={liveUrl}
-      cloudName={mediaEnv().CLOUDINARY_CLOUD_NAME}
+      cloudName={media.CLOUDINARY_CLOUD_NAME}
+      bunnyHost={media.BUNNY_CDN_HOST}
     />
   );
 }

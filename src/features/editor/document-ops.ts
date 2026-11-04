@@ -4,8 +4,10 @@ import type { Step, StepType } from "@/features/steps/schema";
 import { newId } from "@/features/steps/shared/primitives";
 
 // Tipos com renderer no runtime. Os demais entram junto com as entregas deles.
-export const ADDABLE_STEP_TYPES = ["question", "info", "loading", "result"] as const satisfies StepType[];
+export const ADDABLE_STEP_TYPES = ["question", "info", "loading", "result", "vsl", "offerTimer"] as const satisfies StepType[];
 export type AddableStepType = (typeof ADDABLE_STEP_TYPES)[number];
+// Precisam de uma oferta existente para apontar.
+export const OFFER_STEP_TYPES: ReadonlySet<StepType> = new Set(["vsl", "offerTimer"]);
 
 export const STEP_TYPE_LABELS: Record<StepType, string> = {
   question: "Pergunta",
@@ -18,7 +20,7 @@ export const STEP_TYPE_LABELS: Record<StepType, string> = {
   offerTimer: "Oferta com prazo",
 };
 
-export function defaultStep(type: AddableStepType): Step {
+export function defaultStep(type: AddableStepType, offerId = ""): Step {
   const base = { id: newId(), hidden: false };
   switch (type) {
     case "question":
@@ -50,6 +52,27 @@ export function defaultStep(type: AddableStepType): Step {
         fallback: { title: "Seu resultado" },
         ctaLabel: "Continuar",
       };
+    case "vsl":
+      // Nasce sem vídeo: o editor marca o campo até ser preenchido.
+      return {
+        ...base,
+        type,
+        name: "VSL",
+        video: { kind: "video", libraryId: "", videoId: "" },
+        progressBar: { enabled: true, k: 3 },
+        cta: { label: "Quero garantir minha vaga", showAt: 0, offerId },
+        toast: { enabled: false, leadSeconds: 0, windowHours: 48 },
+      };
+    case "offerTimer":
+      return {
+        ...base,
+        type,
+        name: "Oferta com prazo",
+        offerId,
+        title: "Sua oferta especial termina em",
+        expiredText: "A oferta especial terminou.",
+        ctaLabel: "Quero aproveitar",
+      };
   }
 }
 
@@ -59,8 +82,11 @@ function insertAt(doc: QuizDocument, index: number, step: Step): QuizDocument {
   return { ...doc, steps: [...doc.steps.slice(0, index), step, ...doc.steps.slice(index)] };
 }
 
-export function addStep(doc: QuizDocument, type: AddableStepType, afterId?: string) {
-  const step = defaultStep(type);
+// null quando o tipo precisa de oferta e o quiz ainda não tem nenhuma.
+export function addStep(doc: QuizDocument, type: AddableStepType, afterId?: string): { doc: QuizDocument; id: string } | null {
+  const offerId = doc.offers[0]?.id;
+  if (OFFER_STEP_TYPES.has(type) && !offerId) return null;
+  const step = defaultStep(type, offerId);
   const after = afterId ? indexOf(doc, afterId) : -1;
   const index = after === -1 ? doc.steps.length : after + 1;
   return { doc: insertAt(doc, index, step), id: step.id };

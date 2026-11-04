@@ -49,7 +49,15 @@ describe("validateForPublish", () => {
     expect(codes(doc)).not.toContain("social-proof-consent");
   });
 
-  it("exige que o último step visível seja result ou vsl", () => {
+  it("timer com prazo como último step é válido (leva ao checkout)", () => {
+    const doc = build((d) => {
+      d.steps = d.steps.filter((s) => s.type !== "vsl" && s.type !== "result");
+    });
+    expect(doc.steps.at(-1)?.type).toBe("offerTimer");
+    expect(codes(doc)).not.toContain("invalid-final-step");
+  });
+
+  it("exige que o último step visível seja result, vsl ou offerTimer", () => {
     const doc = build((d) => {
       d.steps = d.steps.filter((s) => s.type !== "vsl" && s.type !== "result" && s.type !== "offerTimer");
     });

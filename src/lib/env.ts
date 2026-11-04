@@ -48,6 +48,8 @@ export const databaseEnv = (): DatabaseEnv => parse(DatabaseEnvSchema, "database
 
 const MediaEnvSchema = z.object({
   CLOUDINARY_CLOUD_NAME: z.string().regex(/^[a-z0-9_-]+$/i).optional(),
+  // Pull zone da biblioteca do Bunny Stream, ex.: vz-abc123.b-cdn.net
+  BUNNY_CDN_HOST: z.string().regex(/^[a-z0-9.-]+$/i).optional(),
 });
 export type MediaEnv = z.infer<typeof MediaEnvSchema>;
 export const mediaEnv = (): MediaEnv => parse(MediaEnvSchema, "media");

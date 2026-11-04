@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { parseDocument, type QuizDocument } from "@/features/quiz/document/schema";
-import { demoDocument } from "./demo-document";
+import { demoDocument, demoVslDocument } from "./demo-document";
 
 export type PublishedQuiz = {
   quizId: string;
@@ -49,15 +49,15 @@ export const DEMO_HOST = "demo.localhost";
 export function createDemoSource(): PublishedQuizSource {
   return {
     async find(host, slug) {
-      if (host !== DEMO_HOST || slug !== null) return null;
+      if (host !== DEMO_HOST || (slug !== null && slug !== "vsl")) return null;
       return {
         quizId: "00000000-0000-4000-8000-000000000000",
-        slug: "demo",
+        slug: slug ?? "demo",
         locale: "pt-BR",
         currency: "BRL",
         versionId: "00000000-0000-4000-8000-000000000001",
         versionNumber: 1,
-        document: demoDocument(),
+        document: slug === "vsl" ? demoVslDocument() : demoDocument(),
       };
     },
   };
