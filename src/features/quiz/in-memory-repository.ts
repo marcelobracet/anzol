@@ -55,16 +55,25 @@ export function createInMemoryQuizRepository(): QuizRepository {
       rows = rows.map((r) => (r.id === id ? updated : r));
       return updated;
     },
-    async publish(id, expectedRevision) {
+    async publish(id, expectedRevision, createdBy) {
       const current = rows.find((r) => r.id === id);
       if (!current || current.status === "archived" || current.draftRevision !== expectedRevision) {
         throw new RevisionConflictError();
       }
       const versionNumber = versions.filter((v) => v.quizId === id).length + 1;
-      const version = { id: randomUUID(), quizId: id, versionNumber, document: structuredClone(current.draftDocument), createdAt: now() };
+      const version = { id: randomUUID(), quizId: id, versionNumber, document: structuredClone(current.draftDocument), createdAt: now(), createdBy };
       versions = [...versions, version];
       rows = rows.map((r) => (r.id === id ? { ...r, status: "published" as const, publishedVersionId: version.id } : r));
       return { versionId: version.id, versionNumber };
+    },
+    async listVersions(quizId) {
+      return versions
+        .filter((v) => v.quizId === quizId)
+        .sort((a, b) => b.versionNumber - a.versionNumber)
+        .map(({ id, quizId: owner, versionNumber, createdAt, createdBy }) => ({ id, quizId: owner, versionNumber, createdAt, createdBy }));
+    },
+    async setPublishedVersion(quizId, versionId) {
+      rows = rows.map((r) => (r.id === quizId ? { ...r, status: "published" as const, publishedVersionId: versionId } : r));
     },
     async findVersion(versionId) {
       return versions.find((v) => v.id === versionId) ?? null;

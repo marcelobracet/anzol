@@ -12,12 +12,14 @@ type Props = {
   defaults?: Partial<QuizMetaInput>;
   submitLabel: string;
   successMessage?: string;
+  // Só na criação: começar de um template.
+  templates?: { id: string; name: string; builtIn: boolean }[];
 };
 
 const selectClass =
   "h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
 
-export function QuizMetaForm({ action, defaults, submitLabel, successMessage }: Props) {
+export function QuizMetaForm({ action, defaults, submitLabel, successMessage, templates }: Props) {
   const [state, formAction, pending] = useActionState(action, null);
 
   return (
@@ -46,6 +48,20 @@ export function QuizMetaForm({ action, defaults, submitLabel, successMessage }: 
           ))}
         </select>
       </div>
+      {templates && (
+        <div className="grid gap-1.5 sm:col-span-2">
+          <Label htmlFor="templateId">Começar de</Label>
+          <select id="templateId" name="templateId" className={selectClass} defaultValue="">
+            <option value="">Quiz em branco</option>
+            {templates.map((t) => (
+              <option key={t.id} value={t.id}>
+                {t.name}
+                {t.builtIn ? " (padrão)" : ""}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
       <div className="flex items-center gap-3 sm:col-span-2">
         <Button type="submit" disabled={pending}>{pending ? "Salvando…" : submitLabel}</Button>
         {state && !state.success && <p role="alert" className="text-sm text-destructive">{state.error}</p>}

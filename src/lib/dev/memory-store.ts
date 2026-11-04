@@ -2,6 +2,8 @@ import "server-only";
 import { createInMemoryDomainRepository, type InMemoryDomainRepository } from "@/features/domains/in-memory-repository";
 import { createInMemoryQuizRepository } from "@/features/quiz/in-memory-repository";
 import type { QuizRepository } from "@/features/quiz/repository";
+import { createInMemoryTemplateRepository } from "@/features/templates/in-memory-repository";
+import type { TemplateRepository } from "@/features/templates/repository";
 import { createInMemoryTrackingRepository } from "@/features/tracking/in-memory-repository";
 import { createInMemoryPurchaseStore } from "@/features/webhooks/in-memory-purchases";
 
@@ -19,6 +21,7 @@ type Store = {
   domains: InMemoryDomainRepository;
   tracking: ReturnType<typeof createInMemoryTrackingRepository>;
   purchases: ReturnType<typeof createInMemoryPurchaseStore>;
+  templates: TemplateRepository;
 };
 const globalStore = globalThis as typeof globalThis & { __anzolDevStore?: Store };
 
@@ -30,6 +33,7 @@ export function devMemoryStore(): Store {
       domains: createInMemoryDomainRepository(),
       tracking: createInMemoryTrackingRepository(),
       purchases: createInMemoryPurchaseStore(quizzes),
+      templates: createInMemoryTemplateRepository(),
     };
   }
   return globalStore.__anzolDevStore;

@@ -112,7 +112,7 @@ export function createSupabaseQuizRepository(db: SupabaseClient): QuizRepository
     async findVersion(versionId) {
       const { data, error } = await db
         .from("quiz_versions")
-        .select("id, quiz_id, version_number, document, created_at")
+        .select("id, quiz_id, version_number, document, created_at, created_by")
         .eq("id", versionId)
         .maybeSingle();
       if (error) fail(error);
@@ -125,7 +125,31 @@ export function createSupabaseQuizRepository(db: SupabaseClient): QuizRepository
         versionNumber: Number(data.version_number),
         document: document.data,
         createdAt: String(data.created_at),
+        createdBy: String(data.created_by),
       };
+    },
+
+    async listVersions(quizId) {
+      const { data, error } = await db
+        .from("quiz_versions")
+        .select("id, quiz_id, version_number, created_at, created_by")
+        .eq("quiz_id", quizId)
+        .order("version_number", { ascending: false });
+      if (error) fail(error);
+      return data.map((row) => ({
+        id: String(row.id),
+        quizId: String(row.quiz_id),
+        versionNumber: Number(row.version_number),
+        createdAt: String(row.created_at),
+        createdBy: String(row.created_by),
+      }));
+    },
+
+    async setPublishedVersion(quizId, versionId) {
+      const { error } = await quizzes()
+        .update({ published_version_id: versionId, status: "published", updated_at: new Date().toISOString() })
+        .eq("id", quizId);
+      if (error) fail(error);
     },
 
     async archive(id) {

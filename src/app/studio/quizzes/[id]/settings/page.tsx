@@ -9,6 +9,7 @@ import { domainService } from "@/features/domains/server";
 import { archiveQuizAction, duplicateQuizAction, updateQuizMetaAction } from "@/features/quiz/actions";
 import { QuizMetaForm } from "@/features/quiz/components/quiz-meta-form";
 import { quizService } from "@/features/quiz/server";
+import { SaveTemplateForm } from "@/features/templates/components/save-template-form";
 
 // Lê params e dados privados por request.
 export const instant = false;
@@ -58,6 +59,16 @@ export default async function QuizSettingsPage({ params }: PageProps<"/studio/qu
             defaults={{ ...meta, name: `${quiz.name} (cópia)`, slug: `${quiz.slug}-copia` }}
             submitLabel="Duplicar"
           />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Template</CardTitle>
+          <CardDescription>Guarda o rascunho atual (steps, tema, ofertas) para começar outros quizzes a partir dele.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <SaveTemplateForm quizId={quiz.id} defaultName={quiz.name} />
         </CardContent>
       </Card>
 

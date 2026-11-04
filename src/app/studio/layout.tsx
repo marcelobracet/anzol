@@ -24,7 +24,10 @@ export default async function StudioLayout({ children }: LayoutProps<"/studio">)
         <div className="min-h-screen bg-muted/30">
           <header className="border-b bg-background">
             <div className="flex h-14 items-center justify-between px-4">
-              <Link href="/" className="font-semibold tracking-tight">Anzol Studio</Link>
+              <nav className="flex items-center gap-5">
+                <Link href="/" className="font-semibold tracking-tight">Anzol Studio</Link>
+                <Link href="/templates" className="text-sm text-muted-foreground hover:text-foreground">Templates</Link>
+              </nav>
               <span className="text-sm text-muted-foreground">{email}</span>
             </div>
           </header>

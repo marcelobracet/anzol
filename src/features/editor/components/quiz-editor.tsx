@@ -1,6 +1,6 @@
 "use client";
 
-import { BarChart3, Paintbrush, Settings, ShoppingCart } from "lucide-react";
+import { BarChart3, History, Paintbrush, Settings, ShoppingCart } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { Badge } from "@/components/ui/badge";
@@ -75,6 +75,9 @@ export function QuizEditor({ quiz, liveUrl, cloudName, bunnyHost }: Props) {
             Ver no ar ↗
           </a>
         )}
+        <Link href={`/quizzes/${quiz.id}/versions`} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+          <History className="size-4" /> Versões
+        </Link>
         <Link href={`/quizzes/${quiz.id}/funnel`} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
           <BarChart3 className="size-4" /> Funil
         </Link>
