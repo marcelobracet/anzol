@@ -74,6 +74,10 @@ O bypass de auth (`AUTH_DEV_BYPASS_EMAIL`) só funciona em `next dev` e em previ
 
 `/quizzes/<id>/funnel`: sessões únicas por step da versão publicada, cliques no checkout e compras aprovadas; 7/30/90 dias, versão atual ou todas.
 
+## Leads
+
+`/quizzes/<id>/leads`: indicadores (visitantes, interagiram = passaram da 1ª etapa, taxa de interação, qualificados = viram metade das etapas, fluxos completos, contatos) e uma linha por sessão com a última resposta de cada pergunta, dados do formulário, origem (UTM) e clique no checkout. Busca por texto de resposta, nome, e-mail ou telefone; 50 por página. Respostas chegam como evento `answer` em `POST /api/t` (só funil interno, nunca vão à Meta); SQL em `lead_kpis()` e `lead_sessions()` (migration 0005).
+
 ## Versões e templates
 
 - `/quizzes/<id>/versions`: cada publicação é uma versão imutável. **Colocar no ar** faz rollback (só troca `published_version_id` e invalida o cache do runtime; não cria versão nova). **Copiar para o rascunho** traz a versão para edição (com lock otimista). Há pré-visualização de cada versão.
