@@ -13,3 +13,16 @@ export function parseFunnelQuery(params: SearchParams, now: Date): FunnelQuery {
     to: now.toISOString(),
   };
 }
+
+export type LeadsQuery = FunnelQuery & { page: number; q: string | null };
+const MAX_SEARCH = 100;
+
+export function parseLeadsQuery(params: SearchParams, now: Date): LeadsQuery {
+  const page = Number(params.page);
+  const q = typeof params.q === "string" ? params.q.trim().slice(0, MAX_SEARCH) : "";
+  return {
+    ...parseFunnelQuery(params, now),
+    page: Number.isInteger(page) && page >= 1 ? page : 1,
+    q: q || null,
+  };
+}

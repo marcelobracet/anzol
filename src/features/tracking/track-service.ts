@@ -13,6 +13,7 @@ export type StoredEvent = {
   stepId: string | null;
   type: TrackRequest["type"];
   utm: TrackRequest["utm"];
+  answer: { optionIds: string[] } | null;
 };
 export type StoredLead = {
   quizId: string;
@@ -90,6 +91,12 @@ export function createTrackService(deps: TrackDeps) {
       const step = request.stepId ? quiz.document.steps.find((s) => s.id === request.stepId) : undefined;
       if (request.stepId && !step) return invalid("Step inexistente");
 
+      if (request.type === "answer") {
+        if (step?.type !== "question" || !request.answer) return invalid("Resposta fora de uma pergunta");
+        const known = new Set(step.options.map((o) => o.id));
+        if (!request.answer.optionIds.every((id) => known.has(id))) return invalid("Opção inexistente");
+      }
+
       let lead: NormalizedLead | undefined;
       if (request.type === "lead") {
         if (step?.type !== "leadForm") return invalid("Lead fora de um formulário");
@@ -106,6 +113,7 @@ export function createTrackService(deps: TrackDeps) {
         stepId: request.stepId ?? null,
         type: request.type,
         utm: request.utm,
+        answer: request.type === "answer" ? (request.answer ?? null) : null,
       });
       if (!stored) return { success: true, data: { stored: false, capi: "skipped" } };
 
