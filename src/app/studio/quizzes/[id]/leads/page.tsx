@@ -7,8 +7,10 @@ import { Input } from "@/components/ui/input";
 import { requireStudioUser } from "@/features/auth/require-studio-user";
 import { LeadKpiCards } from "@/features/dashboard/components/lead-kpi-cards";
 import { LeadsTable } from "@/features/dashboard/components/leads-table";
+import { STEP_RATE_GOOD, STEP_RATE_WARN, stepRates } from "@/features/dashboard/funnel";
 import { kpiThresholds } from "@/features/dashboard/leads";
 import { LEADS_PAGE_SIZE, loadLeads } from "@/features/dashboard/leads-data";
+import { loadFunnelStats } from "@/features/dashboard/stats";
 import { parseLeadsQuery, type LeadsQuery } from "@/features/dashboard/query";
 import { quizService } from "@/features/quiz/server";
 import { playableSteps } from "@/features/runtime/engine";
@@ -49,13 +51,12 @@ export default async function LeadsPage({ params, searchParams }: PageProps<"/st
   }
 
   const steps = playableSteps(version.document);
-  const data = await loadLeads(quiz.id, steps, {
-    versionId: query.scope === "current" ? version.id : null,
-    from: query.from,
-    to: query.to,
-    q: query.q,
-    page: query.page,
-  });
+  const range = { versionId: query.scope === "current" ? version.id : null, from: query.from, to: query.to };
+  // Taxas por etapa vêm do período inteiro, não só da página da tabela.
+  const [data, stats] = await Promise.all([
+    loadLeads(quiz.id, steps, { ...range, q: query.q, page: query.page }),
+    loadFunnelStats(quiz.id, range),
+  ]);
   const pages = Math.max(1, Math.ceil(data.total / LEADS_PAGE_SIZE));
   const link = (patch: Partial<Pick<LeadsQuery, "days" | "scope" | "page">>) => {
     const next = new URLSearchParams({ range: String(patch.days ?? query.days), scope: patch.scope ?? query.scope });
@@ -89,7 +90,7 @@ export default async function LeadsPage({ params, searchParams }: PageProps<"/st
       {data.rows.length === 0 ? (
         <p className="text-sm text-muted-foreground">{query.q ? "Nenhuma sessão encontrada para essa busca." : "Nenhuma sessão nesse período."}</p>
       ) : (
-        <LeadsTable steps={steps} rows={data.rows} />
+        <LeadsTable steps={steps} rows={data.rows} rates={stepRates(steps, stats.counts)} />
       )}
 
       <div className="flex items-center justify-between text-sm text-muted-foreground">
@@ -104,6 +105,7 @@ export default async function LeadsPage({ params, searchParams }: PageProps<"/st
       </div>
       <p className="text-xs text-muted-foreground">
         Cada linha é uma sessão (um visitante num navegador). Mostra a última resposta de cada pergunta; &quot;visto&quot; marca etapas sem resposta que a pessoa viu.
+        A barra e a % no cabeçalho são a taxa de interação da etapa: quantos que viram a etapa anterior chegaram nela (verde ≥ {STEP_RATE_GOOD * 100}%, amarelo ≥ {STEP_RATE_WARN * 100}%, vermelho abaixo).
         Respostas passaram a ser gravadas a partir desta versão do Anzol; sessões anteriores mostram só as etapas vistas.
       </p>
     </div>
