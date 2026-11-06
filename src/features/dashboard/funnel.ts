@@ -41,3 +41,24 @@ export function buildFunnel(steps: Step[], counts: EventCount[], purchases: { co
     },
   };
 }
+
+export type StepTone = "good" | "warn" | "bad" | "none";
+export type StepRate = { stepId: string; sessions: number; rate: number | null; tone: StepTone };
+
+// Faixas da taxa de passagem (sessões na etapa ÷ sessões na anterior).
+export const STEP_RATE_GOOD = 0.8;
+export const STEP_RATE_WARN = 0.5;
+
+const toneOf = (rate: number | null): StepTone =>
+  rate === null ? "none" : rate >= STEP_RATE_GOOD ? "good" : rate >= STEP_RATE_WARN ? "warn" : "bad";
+
+// Taxa de interação por etapa, no estilo do Inlead: quantos que viram a etapa anterior chegaram nesta.
+export function stepRates(steps: Step[], counts: EventCount[]): StepRate[] {
+  const views = steps.map((s) =>
+    counts.filter((c) => c.type === "step_view" && c.stepId === s.id).reduce((sum, c) => sum + c.sessions, 0),
+  );
+  return steps.map((s, i) => {
+    const rate = i === 0 || views[i - 1] === 0 ? null : round(views[i] / views[i - 1]);
+    return { stepId: s.id, sessions: views[i], rate, tone: toneOf(rate) };
+  });
+}

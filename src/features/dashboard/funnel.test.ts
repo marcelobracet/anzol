@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { demoDocument } from "@/features/runtime/demo-document";
 import { playableSteps } from "@/features/runtime/engine";
-import { buildFunnel } from "./funnel";
+import { buildFunnel, stepRates } from "./funnel";
 
 const steps = playableSteps(demoDocument());
 const counts = [
@@ -40,5 +40,27 @@ describe("buildFunnel", () => {
     const empty = buildFunnel(steps, [], { count: 0 });
     expect(empty.summary.conversion).toBe(0);
     expect(empty.rows.every((r) => r.fromStart === 0 && r.dropFromPrevious === 0)).toBe(true);
+  });
+});
+
+describe("stepRates", () => {
+  it("dá a taxa de quem chegou em cada etapa vindo da anterior, com tom por faixa", () => {
+    expect(stepRates(steps, counts)).toEqual([
+      { stepId: "intro", sessions: 1000, rate: null, tone: "none" },
+      { stepId: "q_goal", sessions: 800, rate: 0.8, tone: "good" },
+      { stepId: "q_blockers", sessions: 600, rate: 0.75, tone: "warn" },
+      { stepId: "loading", sessions: 590, rate: 0.9833, tone: "good" },
+      { stepId: "result", sessions: 500, rate: 0.8475, tone: "good" },
+    ]);
+  });
+
+  it("marca queda forte como ruim e não divide por zero", () => {
+    const rates = stepRates(steps, [
+      { type: "step_view", stepId: "intro", sessions: 100 },
+      { type: "step_view", stepId: "q_goal", sessions: 40 },
+    ]);
+    expect(rates[1]).toMatchObject({ rate: 0.4, tone: "bad" });
+    expect(rates[2]).toMatchObject({ sessions: 0, rate: 0, tone: "bad" });
+    expect(rates[3]).toMatchObject({ sessions: 0, rate: null, tone: "none" });
   });
 });
