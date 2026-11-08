@@ -61,6 +61,16 @@ const CloudinaryUploadEnvSchema = z.object({
 });
 export const cloudinaryUploadEnv = () => parse(CloudinaryUploadEnvSchema, "cloudinary");
 
+// Vídeos da VSL no Cloudflare R2 (API S3). As chaves ficam só no servidor.
+const R2EnvSchema = z.object({
+  R2_ACCOUNT_ID: z.string().regex(/^[a-f0-9]{32}$/i, "Account ID do Cloudflare"),
+  R2_ACCESS_KEY_ID: z.string().min(1),
+  R2_SECRET_ACCESS_KEY: z.string().min(1),
+  R2_BUCKET: z.string().regex(/^[a-z0-9][a-z0-9-]{1,61}[a-z0-9]$/),
+  R2_PUBLIC_BASE_URL: z.url({ protocol: /^https$/ }),
+});
+export const r2Env = () => parse(R2EnvSchema, "r2");
+
 const VercelEnvSchema = z.object({
   VERCEL_API_TOKEN: z.string().min(1),
   VERCEL_PROJECT_ID: z.string().min(1),

@@ -69,4 +69,11 @@ describe("templates", () => {
     expect(await templates.remove(saved.data.id)).toEqual({ success: true, data: null });
     expect(await templates.remove(BUILT_IN_TEMPLATES[0].id)).toEqual({ success: false, error: "Template padrão não pode ser excluído" });
   });
+
+  it("tem um template padrão de página só VSL", () => {
+    const vsl = BUILT_IN_TEMPLATES.find((t) => t.id === "builtin-vsl");
+    expect(vsl?.document.settings.mode).toBe("vsl");
+    expect(vsl?.document.steps.some((s) => s.type === "vsl")).toBe(true);
+  });
 });
+

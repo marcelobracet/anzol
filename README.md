@@ -36,9 +36,25 @@ Em `npm run dev`, http://demo.localhost:3000 serve um quiz de demonstração e h
 - Lê só a versão publicada (`published_quiz()` no Postgres), nunca o rascunho.
 - Cache com `'use cache'` + tags `runtime:host:<host>` e `runtime:quiz:<id>`; publicar invalida as tags.
 - Imagens via Cloudinary (`CLOUDINARY_CLOUD_NAME`); GIFs são entregues como mp4.
-- VSL: HLS do Bunny Stream (`BUNNY_CDN_HOST`), hls.js carregado só quando precisa; barra 1-(1-x)^k; CTA aos `showAt` segundos assistidos (lembrado no localStorage).
+- VSL: vídeo do Cloudflare R2 (arquivo mp4 direto) ou HLS do Bunny Stream (`BUNNY_CDN_HOST`, hls.js só quando precisa); barra 1-(1-x)^k; CTA aos `showAt` segundos assistidos (lembrado no localStorage; no Studio aceita `300`, `300s`, `2m30s` ou `2:30`). Quem volta à página escolhe entre continuar ou ver do início. Sem vídeo, mostra um espaço reservado.
+- Formato da página (Tema > "O que o visitante vê"): **Quiz + VSL** ou **Só VSL**. No modo só VSL aparece apenas o primeiro step VSL, com faixa no topo, headline, descrição, vídeo em pé (9:16) ou deitado e o botão; os outros steps ficam guardados. Template pronto: "Página só VSL".
 - Checkout: promo enquanto `expiresAt` não passa, senão preço cheio. `utm_*`, `src` e `sck` da URL do quiz substituem os do link; nada mais é repassado.
 - Toast de compras: `GET /api/t/purchases` (só no domínio da oferta) devolve primeiro nome, cidade e país de compras aprovadas reais.
+
+## Vídeo no R2
+
+O Studio envia o vídeo direto do navegador para o bucket (URL assinada pelo servidor, válida por 1 hora). No plano gratuito do R2 cabem 10 GB e a saída de dados (egress) não é cobrada.
+
+1. Crie o bucket: `npx wrangler r2 bucket create anzol-media`.
+2. Em **R2 > anzol-media > Settings**, ligue um **Custom Domain** (ex.: `media.seudominio.com`). O endereço `r2.dev` tem limite de requisições e não serve para anúncios.
+3. **CORS** do bucket (Settings > CORS policy), trocando o host do Studio:
+   ```json
+   [{ "AllowedOrigins": ["https://studio.seudominio.com", "http://localhost:3000"], "AllowedMethods": ["PUT", "GET"], "AllowedHeaders": ["Content-Type"], "MaxAgeSeconds": 3600 }]
+   ```
+4. Em **R2 > Manage API Tokens**, crie um token **Object Read & Write** só para esse bucket e preencha `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET` e `R2_PUBLIC_BASE_URL` (o custom domain).
+5. Exporte o vídeo em MP4 (H.264 + AAC). Até ~12 min em 1080p, fica entre 150 e 400 MB.
+
+Também dá para subir o arquivo pelo painel do R2 e colar a URL pública no campo "Ou cole a URL do vídeo".
 
 ## Verificação (tudo precisa estar verde)
 

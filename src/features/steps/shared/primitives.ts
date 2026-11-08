@@ -22,14 +22,27 @@ export const ImageMedia = z.object({
 // GIF enviado ao Cloudinary e entregue como mp4/webm.
 export const AnimatedMedia = ImageMedia.extend({ kind: z.literal("animated") });
 
-export const VideoMedia = z.object({
+// Bunny Stream (HLS). Documentos antigos não têm provider: viram "bunny".
+export const BunnyVideo = z.object({
   kind: z.literal("video"),
-  libraryId: z.string().min(1), // Bunny Stream
+  provider: z.literal("bunny").default("bunny"),
+  libraryId: z.string().min(1),
   videoId: z.string().min(1),
   poster: ImageMedia.optional(),
 });
 
-export const Media = z.discriminatedUnion("kind", [ImageMedia, AnimatedMedia, VideoMedia]);
+// Arquivo (mp4/webm) servido por URL pública, ex.: bucket do Cloudflare R2.
+export const FileVideo = z.object({
+  kind: z.literal("video"),
+  provider: z.literal("r2"),
+  url: HttpsUrl,
+  poster: ImageMedia.optional(),
+});
+
+export const VideoMedia = z.union([FileVideo, BunnyVideo]);
+export type VideoMedia = z.infer<typeof VideoMedia>;
+
+export const Media = z.union([ImageMedia, AnimatedMedia, FileVideo, BunnyVideo]);
 
 export const StepBase = z.object({
   id: Id,

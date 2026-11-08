@@ -43,6 +43,13 @@ export function validateForPublish(doc: QuizDocument, now: Date = new Date()): P
     }
   }
 
+  if (doc.settings.mode === "vsl") {
+    if (!visible.some((s) => s.type === "vsl")) {
+      issues.push({ code: "vsl-mode-without-vsl", message: "No modo só VSL, o quiz precisa de um step VSL visível" });
+    }
+    return issues;
+  }
+
   const last = visible[visible.length - 1];
   if (!FINAL_STEP_TYPES.has(last.type)) {
     issues.push({

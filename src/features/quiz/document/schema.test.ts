@@ -99,4 +99,40 @@ describe("createEmptyDocument", () => {
     expect(QuizDocument.safeParse(doc).success).toBe(true);
     expect(doc.steps).toHaveLength(1);
   });
+
+  it("VSL aceita vídeo do R2 por URL https", () => {
+    const input = fullDocumentInput();
+    const vsl = input.steps.find((s) => s.type === "vsl")!;
+    Object.assign(vsl, { video: { kind: "video", provider: "r2", url: "https://media.exemplo.com/vsl/a.mp4" } });
+    const doc = QuizDocument.parse(input);
+    expect(doc.steps.find((s) => s.type === "vsl")).toMatchObject({ video: { provider: "r2" } });
+  });
+
+  it("vídeo antigo do Bunny continua válido e ganha provider bunny", () => {
+    const doc = QuizDocument.parse(fullDocumentInput());
+    expect(doc.steps.find((s) => s.type === "vsl")).toMatchObject({ video: { provider: "bunny", videoId: "abc-def" } });
+  });
+
+  it("rejeita vídeo do R2 sem https", () => {
+    const input = fullDocumentInput();
+    const vsl = input.steps.find((s) => s.type === "vsl")!;
+    Object.assign(vsl, { video: { kind: "video", provider: "r2", url: "http://media.exemplo.com/a.mp4" } });
+    expect(QuizDocument.safeParse(input).success).toBe(false);
+  });
+
+  it("VSL pode nascer sem vídeo e com faixa, subtítulo e formato vertical", () => {
+    const input = fullDocumentInput();
+    const vsl = input.steps.find((s) => s.type === "vsl")!;
+    delete vsl.video;
+    Object.assign(vsl, { banner: "Mira el video completo", subheadline: "Sub", aspect: "9:16" });
+    const doc = QuizDocument.parse(input);
+    expect(doc.steps.find((s) => s.type === "vsl")).toMatchObject({ banner: "Mira el video completo", aspect: "9:16" });
+  });
+
+  it("formato padrão do vídeo é 16:9 e o modo padrão é quiz", () => {
+    const doc = QuizDocument.parse(fullDocumentInput());
+    expect(doc.steps.find((s) => s.type === "vsl")).toMatchObject({ aspect: "16:9" });
+    expect(doc.settings.mode).toBe("quiz");
+  });
 });
+

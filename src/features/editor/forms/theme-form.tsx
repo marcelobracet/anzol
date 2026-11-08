@@ -5,6 +5,11 @@ import { CheckboxField, ColorField, NumberField, SelectField, TextField } from "
 import { MediaField } from "../components/media-field";
 import { errorAt, type EditorIssue } from "../document-ops";
 
+const MODES = [
+  { value: "quiz", label: "Quiz + VSL" },
+  { value: "vsl", label: "Só VSL" },
+] as const;
+
 const FONTS = [
   { value: "inter", label: "Inter" },
   { value: "manrope", label: "Manrope" },
@@ -56,6 +61,16 @@ export function ThemeForm({ theme, settings, onTheme, onSettings, tracking, onTr
         cloudName={cloudName}
         onChange={(logo) => onTheme({ ...theme, logo: logo?.kind === "image" ? logo : undefined })}
       />
+      <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">Formato da página</p>
+      <SelectField
+        label="O que o visitante vê"
+        value={settings.mode}
+        options={MODES}
+        onChange={(mode) => onSettings({ ...settings, mode })}
+      />
+      {settings.mode === "vsl" && (
+        <p className="text-xs text-muted-foreground">Só o primeiro step VSL aparece. Os outros steps ficam guardados para voltar ao modo quiz.</p>
+      )}
       <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">Navegação</p>
       <CheckboxField label="Mostrar barra de progresso" checked={settings.showProgress} onChange={(showProgress) => onSettings({ ...settings, showProgress })} />
       <CheckboxField label="Permitir voltar" checked={settings.allowBack} onChange={(allowBack) => onSettings({ ...settings, allowBack })} />

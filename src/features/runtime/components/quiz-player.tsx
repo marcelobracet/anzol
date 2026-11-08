@@ -7,6 +7,7 @@ import { StepView } from "@/features/steps/registry";
 import { ConsentBanner } from "@/features/tracking/client/consent-banner";
 import { useTracker } from "@/features/tracking/client/use-tracker";
 import { t } from "../i18n";
+import { interpolate } from "../interpolate";
 import { initialState, playableSteps, progress, reduce, type QuizAction } from "../engine";
 
 type Props = {
@@ -79,9 +80,19 @@ export function QuizPlayer({
   const step = steps[index];
   if (!step) return null;
   const canGoBack = allowBack && index > 0 && step.type !== "loading";
+  // Página de VSL única: sem voltar nem barra do quiz, coluna mais larga para a headline.
+  const vslPage = steps.length === 1 && step.type === "vsl";
+  const banner = step.type === "vsl" ? step.banner : undefined;
 
   return (
-    <div className={`mx-auto flex w-full max-w-md flex-col px-4 ${embedded ? "min-h-full" : "min-h-dvh"}`}>
+    <div className={`flex w-full flex-col ${embedded ? "min-h-full" : "min-h-dvh"}`}>
+      {banner && (
+        <div className="bg-[var(--q-accent)] px-4 py-2.5 text-center text-sm font-bold text-balance text-[var(--q-on-accent)] sm:text-base">
+          {interpolate(banner, { steps, answers: state.answers, lead })}
+        </div>
+      )}
+    <div className={`mx-auto flex w-full flex-1 flex-col px-4 ${vslPage ? "max-w-3xl pb-10" : "max-w-md"}`}>
+      {(!vslPage || doc.theme.logo) && (
       <header className="flex h-14 items-center gap-3">
         <button
           type="button"
@@ -100,7 +111,8 @@ export function QuizPlayer({
         </div>
         <span className="size-10" />
       </header>
-      {showProgress && (
+      )}
+      {showProgress && !vslPage && (
         <div className="h-1.5 w-full overflow-hidden rounded-full bg-[var(--q-surface)]" aria-hidden>
           <div
             className="h-full rounded-full bg-[var(--q-primary)] transition-[width] duration-300"
@@ -128,6 +140,7 @@ export function QuizPlayer({
         />
       </main>
       {tracker.consent === "ask" && <ConsentBanner locale={locale} onChoose={tracker.choose} />}
+    </div>
     </div>
   );
 }

@@ -116,3 +116,28 @@ describe("progress", () => {
     expect(progress(at(0), steps.slice(0, 1))).toBe(1);
   });
 });
+
+describe("playableSteps no modo só VSL", () => {
+  const withVsl = () => {
+    const input = structuredClone(doc);
+    input.offers = [{ id: "offer_x", provider: "hotmart", fullPriceUrl: "https://pay.hotmart.com/X" }];
+    input.steps.push({
+      id: "vsl_only",
+      type: "vsl",
+      name: "VSL",
+      cta: { label: "Comprar", showAt: 60, offerId: "offer_x" },
+    } as never);
+    return input;
+  };
+
+  it("mostra só o primeiro step VSL visível", () => {
+    const input = { ...withVsl(), settings: { ...doc.settings, mode: "vsl" as const } };
+    expect(playableSteps(QuizDocument.parse(input)).map((s) => s.id)).toEqual(["vsl_only"]);
+  });
+
+  it("no modo quiz mantém todos os steps visíveis", () => {
+    const parsed = QuizDocument.parse(withVsl());
+    expect(parsed.settings.mode).toBe("quiz");
+    expect(playableSteps(parsed).length).toBe(doc.steps.length + 1);
+  });
+});

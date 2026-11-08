@@ -8,4 +8,5 @@ export type StepFormProps<S extends Step = Step> = {
   issues?: EditorIssue[];
   cloudName?: string;
   offers: Offer[];
+  quizId?: string; // pasta do upload de vídeo
 };
