@@ -59,8 +59,13 @@ export const QuizDocument = z
     theme: Theme,
     offers: z.array(Offer).max(5).default([]),
     settings: z
-      .object({ showProgress: z.boolean().default(true), allowBack: z.boolean().default(true) })
-      .default({ showProgress: true, allowBack: true }),
+      .object({
+        showProgress: z.boolean().default(true),
+        allowBack: z.boolean().default(true),
+        // "vsl": a página é só a VSL (os outros steps ficam guardados, mas não aparecem).
+        mode: z.enum(["quiz", "vsl"]).default("quiz"),
+      })
+      .default({ showProgress: true, allowBack: true, mode: "quiz" }),
     tracking: z
       .object({ metaPixelId: z.string().regex(/^\d{5,20}$/, "Pixel ID: só números").optional() })
       .default({}),

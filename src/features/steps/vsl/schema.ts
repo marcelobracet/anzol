@@ -3,8 +3,11 @@ import { Hex, Id, StepBase, Text, VideoMedia } from "../shared/primitives";
 
 export const VslStep = StepBase.extend({
   type: z.literal("vsl"),
+  banner: Text.optional(), // faixa no topo da página
   headline: Text.optional(),
-  video: VideoMedia,
+  subheadline: Text.optional(),
+  video: VideoMedia.optional(), // sem vídeo, mostra um espaço reservado
+  aspect: z.enum(["16:9", "9:16"]).default("16:9"),
   accentColor: Hex.optional(), // padrão: theme.colors.accent
   // Progresso exibido = 1 - (1 - x)^k, x = tempo assistido / duração.
   progressBar: z

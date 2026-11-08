@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { parseDocument, type QuizDocument } from "@/features/quiz/document/schema";
-import { demoDocument, demoVslDocument } from "./demo-document";
+import { demoDocument, demoVslDocument, demoVslOnlyDocument } from "./demo-document";
 
 export type PublishedQuiz = {
   quizId: string;
@@ -45,19 +45,26 @@ export function toPublishedQuiz(raw: unknown): PublishedQuiz {
 
 export const DEMO_HOST = "demo.localhost";
 
+const DEMO_SLUGS: Record<string, { locale: string; document: () => ReturnType<typeof demoDocument> }> = {
+  demo: { locale: "pt-BR", document: demoDocument },
+  vsl: { locale: "pt-BR", document: demoVslDocument },
+  "vsl-es": { locale: "es-419", document: demoVslOnlyDocument },
+};
+
 // Só para desenvolvimento: permite ver o runtime sem banco em http://demo.localhost:3000.
 export function createDemoSource(): PublishedQuizSource {
   return {
     async find(host, slug) {
-      if (host !== DEMO_HOST || (slug !== null && slug !== "vsl")) return null;
+      if (host !== DEMO_HOST || (slug !== null && !(slug in DEMO_SLUGS))) return null;
+      const demo = DEMO_SLUGS[slug ?? "demo"];
       return {
         quizId: "00000000-0000-4000-8000-000000000000",
         slug: slug ?? "demo",
-        locale: "pt-BR",
+        locale: demo.locale,
         currency: "BRL",
         versionId: "00000000-0000-4000-8000-000000000001",
         versionNumber: 1,
-        document: slug === "vsl" ? demoVslDocument() : demoDocument(),
+        document: demo.document(),
       };
     },
   };

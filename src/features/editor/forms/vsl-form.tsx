@@ -1,22 +1,30 @@
 "use client";
 
 import type { VslStep } from "@/features/steps/vsl/schema";
-import { CheckboxField, NumberField, TextField } from "../components/fields";
+import { DurationField } from "../components/duration-field";
+import { CheckboxField, NumberField, SelectField, TextField } from "../components/fields";
+import { VideoField } from "../components/video-field";
 import { errorAt } from "../document-ops";
 import type { StepFormProps } from "./form-props";
 import { OfferSelect } from "./offer-select";
 
-export function VslForm({ step, onChange, issues, offers }: StepFormProps<VslStep>) {
+const ASPECTS = [
+  { value: "9:16", label: "Em pé (9:16), ideal para celular" },
+  { value: "16:9", label: "Deitado (16:9)" },
+] as const;
+
+export function VslForm({ step, onChange, issues, offers, quizId }: StepFormProps<VslStep>) {
   const set = (patch: Partial<VslStep>) => onChange({ ...step, ...patch });
-  const { cta, toast, progressBar, video } = step;
+  const { cta, toast, progressBar } = step;
   return (
     <div className="grid gap-4">
-      <TextField label="Headline (opcional)" value={step.headline} onChange={(v) => set({ headline: v || undefined })} />
-      <h3 className="text-sm font-semibold">Vídeo (Bunny Stream)</h3>
-      <div className="grid grid-cols-2 gap-2">
-        <TextField label="Library ID" value={video.libraryId} maxLength={40} onChange={(libraryId) => set({ video: { ...video, libraryId: libraryId.trim() } })} error={errorAt(issues, "video", "libraryId")} />
-        <TextField label="Video ID" value={video.videoId} maxLength={60} onChange={(videoId) => set({ video: { ...video, videoId: videoId.trim() } })} error={errorAt(issues, "video", "videoId")} />
-      </div>
+      <h3 className="text-sm font-semibold">Textos da página</h3>
+      <TextField label="Faixa no topo (opcional)" value={step.banner} onChange={(v) => set({ banner: v || undefined })} />
+      <TextField label="Headline (opcional)" value={step.headline} multiline onChange={(v) => set({ headline: v || undefined })} />
+      <TextField label="Descrição abaixo da headline (opcional)" value={step.subheadline} onChange={(v) => set({ subheadline: v || undefined })} />
+      <h3 className="text-sm font-semibold">Vídeo</h3>
+      <SelectField label="Formato" value={step.aspect} options={ASPECTS} onChange={(aspect) => set({ aspect })} />
+      <VideoField value={step.video} quizId={quizId} onChange={(video) => set({ video })} error={errorAt(issues, "video")} />
       <CheckboxField label="Barra de progresso acelerada" checked={progressBar.enabled} onChange={(enabled) => set({ progressBar: { ...progressBar, enabled } })} />
       {progressBar.enabled && (
         <NumberField
@@ -33,11 +41,10 @@ export function VslForm({ step, onChange, issues, offers }: StepFormProps<VslSte
       <h3 className="text-sm font-semibold">Botão de compra</h3>
       <OfferSelect offers={offers} value={cta.offerId} onChange={(offerId) => set({ cta: { ...cta, offerId } })} />
       <TextField label="Texto do botão" value={cta.label} onChange={(label) => set({ cta: { ...cta, label } })} error={errorAt(issues, "cta", "label")} />
-      <NumberField
-        label="Aparece aos (segundos de vídeo)"
-        min={0}
+      <DurationField
+        label="Aparece aos (tempo de vídeo assistido)"
         value={cta.showAt}
-        onChange={(showAt) => set({ cta: { ...cta, showAt: showAt ?? 0 } })}
+        onChange={(showAt) => set({ cta: { ...cta, showAt } })}
         error={errorAt(issues, "cta", "showAt")}
       />
       <h3 className="text-sm font-semibold">Toast de compras</h3>

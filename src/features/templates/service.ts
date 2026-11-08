@@ -1,7 +1,7 @@
 import { createEmptyDocument } from "@/features/quiz/document/schema";
 import type { QuizService } from "@/features/quiz/service";
 import type { QuizRecord, Result } from "@/features/quiz/types";
-import { demoDocument } from "@/features/runtime/demo-document";
+import { demoDocument, demoVslOnlyDocument } from "@/features/runtime/demo-document";
 import { toSummary, type Template, type TemplateRepository, type TemplateSummary } from "./repository";
 
 // Padrões no código: sempre disponíveis e versionados com o app.
@@ -13,6 +13,14 @@ export const BUILT_IN_TEMPLATES: Template[] = [
     createdAt: "2026-11-04T00:00:00.000Z",
     builtIn: true,
     document: demoDocument(),
+  },
+  {
+    id: "builtin-vsl",
+    name: "Página só VSL (faixa, headline, vídeo em pé e botão)",
+    createdBy: "Anzol",
+    createdAt: "2026-11-07T00:00:00.000Z",
+    builtIn: true,
+    document: demoVslOnlyDocument(),
   },
 ];
 

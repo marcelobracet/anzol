@@ -32,10 +32,11 @@ describe("defaultStep", () => {
     expect(result.error?.issues.every((i) => i.path[0] === "items")).toBe(true);
   });
 
-  it("VSL nasce sem vídeo e só o vídeo fica inválido", () => {
+  it("VSL nasce válida, sem vídeo (espaço reservado) e em pé", () => {
     const result = Step.safeParse(defaultStep("vsl", "offer_x"));
-    expect(result.success).toBe(false);
-    expect(result.error?.issues.every((i) => i.path[0] === "video")).toBe(true);
+    expect(result.success).toBe(true);
+    expect(result.data).toMatchObject({ aspect: "9:16" });
+    expect(result.data).not.toHaveProperty("video");
   });
 });
 

@@ -70,4 +70,20 @@ describe("validateForPublish", () => {
     });
     expect(codes(doc)).toEqual(["no-visible-steps"]);
   });
+
+  it("modo só VSL exige um step VSL visível", () => {
+    const input = fullDocumentInput();
+    Object.assign(input.settings, { mode: "vsl" });
+    input.steps = input.steps.filter((s) => s.type !== "vsl");
+    const issues = validateForPublish(QuizDocument.parse(input));
+    expect(issues.map((i) => i.code)).toContain("vsl-mode-without-vsl");
+  });
+
+  it("modo só VSL ignora a regra do último step", () => {
+    const input = fullDocumentInput();
+    Object.assign(input.settings, { mode: "vsl" });
+    input.steps.push({ id: "info_end", type: "info", name: "Fim", title: "Fim", ctaLabel: "Ok" } as unknown as (typeof input.steps)[number]);
+    expect(validateForPublish(QuizDocument.parse(input))).toEqual([]);
+  });
 });
+

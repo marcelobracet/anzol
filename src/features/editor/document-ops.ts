@@ -79,12 +79,12 @@ export function defaultStep(type: AddableStepType, offerId = ""): Step {
         ctaLabel: "Ver meu resultado",
       };
     case "vsl":
-      // Nasce sem vídeo: o editor marca o campo até ser preenchido.
+      // Nasce sem vídeo (a página mostra um espaço reservado) e em pé, para o celular.
       return {
         ...base,
         type,
         name: "VSL",
-        video: { kind: "video", libraryId: "", videoId: "" },
+        aspect: "9:16",
         progressBar: { enabled: true, k: 3 },
         cta: { label: "Quero garantir minha vaga", showAt: 0, offerId },
         toast: { enabled: false, leadSeconds: 0, windowHours: 48 },

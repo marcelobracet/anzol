@@ -118,3 +118,30 @@ export function demoVslDocument(): QuizDocument {
     ],
   });
 }
+
+// Demo da página só VSL em espanhol (demo.localhost/vsl-es), com o texto do Pequeños Exploradores.
+export function demoVslOnlyDocument(): QuizDocument {
+  const base = demoVslDocument();
+  return QuizDocument.parse({
+    ...base,
+    theme: {
+      colors: { primary: "#7FA650", background: "#FFF9F2", surface: "#F6EDE2", text: "#4A2C1A", accent: "#D9603B" },
+      font: "poppins",
+      radius: 14,
+    },
+    settings: { ...base.settings, mode: "vsl" },
+    steps: [
+      {
+        id: "vsl_es",
+        type: "vsl",
+        name: "VSL Pequeños Exploradores",
+        banner: "🎥 Video gratuito · míralo hasta el final",
+        headline: "Las 3 etapas para que tu bebé aprenda a comer de todo, sin miedo y sin peleas",
+        subheadline: "Mira este video antes de la próxima comida de tu bebé.",
+        aspect: "9:16",
+        cta: { label: "Quiero Pequeños Exploradores", showAt: 3, offerId: "offer_demo" },
+        toast: { enabled: false, leadSeconds: 0, windowHours: 48 },
+      },
+    ],
+  });
+}

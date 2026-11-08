@@ -158,7 +158,7 @@ export function QuizEditor({ quiz, liveUrl, cloudName, bunnyHost }: Props) {
               onTracking={(tracking) => update({ ...doc, tracking })}
             />
           ) : selected ? (
-            <StepForm step={selected} issues={issues[selected.id]} cloudName={cloudName} offers={doc.offers} onChange={(step: Step) => update(replaceStep(doc, step))} />
+            <StepForm step={selected} issues={issues[selected.id]} cloudName={cloudName} offers={doc.offers} quizId={quiz.id} onChange={(step: Step) => update(replaceStep(doc, step))} />
           ) : (
             <p className="text-sm text-muted-foreground">Selecione um step.</p>
           )}

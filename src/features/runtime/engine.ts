@@ -10,7 +10,10 @@ export type QuizAction =
 export type EngineOptions = { allowBack: boolean };
 
 export function playableSteps(doc: QuizDocument): Step[] {
-  return doc.steps.filter((step) => !step.hidden);
+  const visible = doc.steps.filter((step) => !step.hidden);
+  if (doc.settings.mode !== "vsl") return visible;
+  const vsl = visible.find((step) => step.type === "vsl");
+  return vsl ? [vsl] : [];
 }
 
 export function initialState(): QuizState {
