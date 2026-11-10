@@ -1,9 +1,36 @@
 import { z } from "zod";
-import { Hex, Id, StepBase, Text, VideoMedia } from "../shared/primitives";
+import { Hex, Id, ImageMedia, StepBase, Text, VideoMedia } from "../shared/primitives";
+
+export const BANNER_ICONS = ["none", "compass", "clock", "alert", "flame", "play", "gift", "star", "heart", "bell"] as const;
+export const BANNER_ANIMATIONS = ["none", "pulse", "bounce", "shake", "spin", "blink"] as const;
+
+// Visual da faixa do topo. Sem cores, usa o destaque do tema com texto de contraste automático.
+export const BannerStyle = z.object({
+  background: Hex.optional(),
+  text: Hex.optional(),
+  icon: z.enum(BANNER_ICONS).default("none"),
+  iconImage: ImageMedia.optional(), // imagem própria no lugar do ícone
+  animation: z.enum(BANNER_ANIMATIONS).default("pulse"),
+});
+export type BannerStyle = z.infer<typeof BannerStyle>;
+
+// Tela sobre o vídeo antes do play com retomada e quando o visitante pausa.
+export const PauseScreen = z.object({
+  overlay: Hex.optional(), // padrão: preto
+  opacity: z.number().int().min(0).max(100).default(55),
+  text: Hex.optional(), // padrão: contraste automático
+  blur: z.boolean().default(false),
+  title: Text.optional(), // padrão: texto do idioma
+  continueLabel: Text.optional(),
+  restartLabel: Text.optional(),
+});
+export type PauseScreen = z.infer<typeof PauseScreen>;
 
 export const VslStep = StepBase.extend({
   type: z.literal("vsl"),
   banner: Text.optional(), // faixa no topo da página
+  bannerStyle: BannerStyle.default({ icon: "none", animation: "pulse" }),
+  pauseScreen: PauseScreen.default({ opacity: 55, blur: false }),
   headline: Text.optional(),
   subheadline: Text.optional(),
   video: VideoMedia.optional(), // sem vídeo, mostra um espaço reservado
