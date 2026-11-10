@@ -14,6 +14,12 @@ describe("t", () => {
     expect(t("pt-BR", "justBoughtNoCity", { name: "Ana" })).toBe("Ana acabou de comprar");
   });
 
+  it("tem o título da tela de pausa em todos os idiomas", () => {
+    expect(t("pt-BR", "pausedTitle")).toBe("Seu vídeo está pausado");
+    expect(t("es-MX", "pausedTitle")).toBe("Tu video está en pausa");
+    expect(t("fr-FR", "pausedTitle")).not.toBe(t("en-US", "pausedTitle"));
+  });
+
   it("idioma desconhecido cai no inglês", () => {
     expect(t("ja-JP", "continue")).toBe("Continue");
   });

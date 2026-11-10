@@ -4,11 +4,21 @@ import { Hex, HttpsUrl, Id, ImageMedia, newId } from "@/features/steps/shared/pr
 
 export const SCHEMA_VERSION = 1 as const;
 
+// Fundo da página: padrão desenhado com a cor do texto, brilho suave e imagem opcional.
+export const PageBackground = z.object({
+  pattern: z.enum(["none", "grid", "dots"]).default("none"),
+  glow: z.boolean().default(false), // manchas suaves com as cores de destaque e primária
+  image: ImageMedia.optional(),
+  imageOverlay: z.number().int().min(0).max(90).default(40), // % da cor de fundo sobre a imagem
+});
+export type PageBackground = z.infer<typeof PageBackground>;
+
 export const Theme = z.object({
   colors: z.object({ primary: Hex, background: Hex, surface: Hex, text: Hex, accent: Hex }),
   font: z.enum(["inter", "manrope", "poppins", "dm-sans", "lora"]), // lista curada (next/font)
   logo: ImageMedia.optional(),
   radius: z.number().int().min(0).max(32),
+  background: PageBackground.optional(),
 });
 export type Theme = z.infer<typeof Theme>;
 

@@ -85,6 +85,8 @@ export function defaultStep(type: AddableStepType, offerId = ""): Step {
         type,
         name: "VSL",
         aspect: "9:16",
+        bannerStyle: { icon: "none", animation: "pulse" },
+        pauseScreen: { opacity: 55, blur: false },
         progressBar: { enabled: true, k: 3 },
         cta: { label: "Quero garantir minha vaga", showAt: 0, offerId },
         toast: { enabled: false, leadSeconds: 0, windowHours: 48 },

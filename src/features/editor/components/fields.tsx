@@ -120,6 +120,27 @@ export function ColorField({ label, value, onChange, error }: { label: string; v
   );
 }
 
+// Cor opcional: sem valor, a página usa o padrão (do tema ou contraste automático).
+export function OptionalColorField({ label, value, fallback, onChange }: { label: string; value?: string; fallback: string; onChange: (v: string | undefined) => void }) {
+  if (value === undefined) {
+    return (
+      <Field label={label}>
+        <button type="button" className="h-8 rounded border border-dashed border-input px-2 text-left text-xs text-muted-foreground hover:bg-muted" onClick={() => onChange("#FFFFFF")}>
+          Padrão ({fallback}) · personalizar
+        </button>
+      </Field>
+    );
+  }
+  return (
+    <div className="grid gap-1">
+      <ColorField label={label} value={value} onChange={onChange} />
+      <button type="button" className="justify-self-start text-xs text-muted-foreground hover:text-foreground" onClick={() => onChange(undefined)}>
+        Voltar ao padrão
+      </button>
+    </div>
+  );
+}
+
 // Lista de itens com adicionar/remover/reordenar; cada item renderiza o próprio formulário.
 export function ItemList<T>({
   items,

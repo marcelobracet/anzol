@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useReducer, useRef, useState } from "react";
 import type { QuizDocument } from "@/features/quiz/document/schema";
+import { imageUrl } from "@/features/media/cloudinary";
 import { MediaView } from "@/features/media/components/media-view";
 import { StepView } from "@/features/steps/registry";
 import { ConsentBanner } from "@/features/tracking/client/consent-banner";
@@ -9,6 +10,10 @@ import { useTracker } from "@/features/tracking/client/use-tracker";
 import { t } from "../i18n";
 import { interpolate } from "../interpolate";
 import { initialState, playableSteps, progress, reduce, type QuizAction } from "../engine";
+import { backgroundStyle } from "../page-style";
+import { PageBanner } from "./page-banner";
+
+const BACKGROUND_WIDTH = 1600;
 
 type Props = {
   document: QuizDocument;
@@ -82,14 +87,13 @@ export function QuizPlayer({
   const canGoBack = allowBack && index > 0 && step.type !== "loading";
   // Página de VSL única: sem voltar nem barra do quiz, coluna mais larga para a headline.
   const vslPage = steps.length === 1 && step.type === "vsl";
-  const banner = step.type === "vsl" ? step.banner : undefined;
+  const background = doc.theme.background;
+  const backgroundImage = background?.image && cloudName ? imageUrl(cloudName, background.image.publicId, BACKGROUND_WIDTH) : undefined;
 
   return (
-    <div className={`flex w-full flex-col ${embedded ? "min-h-full" : "min-h-dvh"}`}>
-      {banner && (
-        <div className="bg-[var(--q-accent)] px-4 py-2.5 text-center text-sm font-bold text-balance text-[var(--q-on-accent)] sm:text-base">
-          {interpolate(banner, { steps, answers: state.answers, lead })}
-        </div>
+    <div style={backgroundStyle(background, backgroundImage)} className={`flex w-full flex-col ${embedded ? "min-h-full" : "min-h-dvh"}`}>
+      {step.type === "vsl" && step.banner && (
+        <PageBanner text={interpolate(step.banner, { steps, answers: state.answers, lead })} style={step.bannerStyle} cloudName={cloudName} />
       )}
     <div className={`mx-auto flex w-full flex-1 flex-col px-4 ${vslPage ? "max-w-3xl pb-10" : "max-w-md"}`}>
       {(!vslPage || doc.theme.logo) && (

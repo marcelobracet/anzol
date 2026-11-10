@@ -128,3 +128,32 @@
     @apply font-sans;
   }
 }
+/* Animações do ícone da faixa do topo (runtime). */
+@keyframes q-pulse {
+  0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgb(255 255 255 / 0.35); }
+  50% { transform: scale(1.1); box-shadow: 0 0 0 8px rgb(255 255 255 / 0); }
+}
+@keyframes q-bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+@keyframes q-shake {
+  0%, 60%, 100% { transform: rotate(0); }
+  10%, 30%, 50% { transform: rotate(-12deg); }
+  20%, 40% { transform: rotate(12deg); }
+}
+@keyframes q-spin {
+  to { transform: rotate(360deg); }
+}
+@keyframes q-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+.q-anim-pulse { animation: q-pulse 1.6s ease-in-out infinite; }
+.q-anim-bounce { animation: q-bounce 1s ease-in-out infinite; }
+.q-anim-shake { animation: q-shake 1.8s ease-in-out infinite; }
+.q-anim-spin { animation: q-spin 4s linear infinite; }
+.q-anim-blink { animation: q-blink 1.2s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) {
+  [class*="q-anim-"] { animation: none; }
+}

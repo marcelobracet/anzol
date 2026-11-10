@@ -128,6 +128,7 @@ export function demoVslOnlyDocument(): QuizDocument {
       colors: { primary: "#7FA650", background: "#FFF9F2", surface: "#F6EDE2", text: "#4A2C1A", accent: "#D9603B" },
       font: "poppins",
       radius: 14,
+      background: { pattern: "grid", glow: true },
     },
     settings: { ...base.settings, mode: "vsl" },
     steps: [
@@ -135,7 +136,9 @@ export function demoVslOnlyDocument(): QuizDocument {
         id: "vsl_es",
         type: "vsl",
         name: "VSL Pequeños Exploradores",
-        banner: "🎥 Video gratuito · míralo hasta el final",
+        banner: "Video gratuito · míralo hasta el final",
+        bannerStyle: { icon: "compass", animation: "pulse", text: "#FFFFFF" },
+        pauseScreen: { overlay: "#7FA650", opacity: 100 },
         headline: "Las 3 etapas para que tu bebé aprenda a comer de todo, sin miedo y sin peleas",
         subheadline: "Mira este video antes de la próxima comida de tu bebé.",
         aspect: "9:16",

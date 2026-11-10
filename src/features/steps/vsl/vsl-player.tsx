@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { t } from "@/features/runtime/i18n";
+import { pauseOverlayStyle } from "@/features/runtime/page-style";
 import { displayedProgress } from "./progress";
 import type { VslStep } from "./schema";
 import type { VideoSource } from "./video-source";
@@ -20,6 +21,7 @@ const HLS_MIME = "application/vnd.apple.mpegurl";
 export function VslPlayer({ step, source, locale, resumeAt, onWatched }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [started, setStarted] = useState(false);
+  const [paused, setPaused] = useState<"no" | "paused" | "ended">("no");
   const [time, setTime] = useState({ current: 0, duration: 0 });
   const { src, hls } = source;
 
@@ -69,6 +71,15 @@ export function VslPlayer({ step, source, locale, resumeAt, onWatched }: Props) 
     else video.pause();
   };
 
+  const screen = step.pauseScreen;
+  const overlay = pauseOverlayStyle(screen);
+  const continueLabel = screen.continueLabel || t(locale, "resumeContinue");
+  const restartLabel = screen.restartLabel || t(locale, "resumeRestart");
+  const resume = () => {
+    setPaused("no");
+    void videoRef.current?.play();
+  };
+
   const progress = displayedProgress(time.current, time.duration, step.progressBar.k);
   const accent = step.accentColor ?? "var(--q-accent)";
   const vertical = step.aspect === "9:16";
@@ -85,15 +96,26 @@ export function VslPlayer({ step, source, locale, resumeAt, onWatched }: Props) 
           playsInline
           preload="metadata"
           onTimeUpdate={onTimeUpdate}
+          onPause={(e) => started && setPaused(e.currentTarget.ended ? "ended" : "paused")}
+          onPlay={() => setPaused("no")}
           onClick={started ? togglePlay : () => start(resumeAt)}
         />
+        {started && paused !== "no" && (
+          <div style={overlay} className="absolute inset-0 grid place-items-center p-6">
+            <div className="grid justify-items-start gap-4">
+              <p className="text-lg font-bold text-balance">{screen.title || t(locale, "pausedTitle")}</p>
+              {paused === "paused" && <ResumeOption icon="▶" label={continueLabel} onClick={resume} />}
+              <ResumeOption icon="↺" label={restartLabel} onClick={() => start(0)} />
+            </div>
+          </div>
+        )}
         {!started && (
-          <div className="absolute inset-0 grid place-items-center bg-black/45 p-6 text-white">
+          <div style={resumeAt > 0 ? overlay : undefined} className={`absolute inset-0 grid place-items-center p-6 ${resumeAt > 0 ? "" : "bg-black/45 text-white"}`}>
             {resumeAt > 0 ? (
               <div className="grid justify-items-start gap-4">
-                <p className="text-lg font-bold text-balance">{t(locale, "resumeTitle")}</p>
-                <ResumeOption icon="▶" label={t(locale, "resumeContinue")} onClick={() => start(resumeAt)} />
-                <ResumeOption icon="↺" label={t(locale, "resumeRestart")} onClick={() => start(0)} />
+                <p className="text-lg font-bold text-balance">{screen.title || t(locale, "resumeTitle")}</p>
+                <ResumeOption icon="▶" label={continueLabel} onClick={() => start(resumeAt)} />
+                <ResumeOption icon="↺" label={restartLabel} onClick={() => start(0)} />
               </div>
             ) : (
               <button
@@ -119,7 +141,7 @@ export function VslPlayer({ step, source, locale, resumeAt, onWatched }: Props) 
 function ResumeOption({ icon, label, onClick }: { icon: string; label: string; onClick: () => void }) {
   return (
     <button type="button" onClick={onClick} className="flex items-center gap-3 text-base font-semibold">
-      <span className="grid size-9 place-items-center rounded-full border-2 border-white/90 text-sm">{icon}</span>
+      <span className="grid size-9 place-items-center rounded-full border-2 border-current text-sm">{icon}</span>
       {label}
     </button>
   );
