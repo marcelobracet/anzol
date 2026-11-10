@@ -1,5 +1,6 @@
 import type { PublishedQuiz } from "@/features/runtime/published-source";
 import type { LeadFormStep } from "@/features/steps/lead-form/schema";
+import { isMilestone } from "@/features/steps/vsl/milestones";
 import { buildCapiEvent, type CapiEvent } from "./capi";
 import { consentRequired } from "./consent";
 import { META_EVENT, TrackRequest } from "./event-types";
@@ -12,6 +13,7 @@ export type StoredEvent = {
   sessionId: string;
   stepId: string | null;
   type: TrackRequest["type"];
+  videoSecond: number | null; // só em vsl_progress
   utm: TrackRequest["utm"];
 };
 export type StoredLead = {
@@ -90,6 +92,11 @@ export function createTrackService(deps: TrackDeps) {
       const step = request.stepId ? quiz.document.steps.find((s) => s.id === request.stepId) : undefined;
       if (request.stepId && !step) return invalid("Step inexistente");
 
+      if (request.type === "vsl_progress") {
+        if (step?.type !== "vsl") return invalid("Progresso fora de um step VSL");
+        if (request.videoSecond === undefined || !isMilestone(request.videoSecond)) return invalid("Segundo do vídeo inválido");
+      }
+
       let lead: NormalizedLead | undefined;
       if (request.type === "lead") {
         if (step?.type !== "leadForm") return invalid("Lead fora de um formulário");
@@ -105,6 +112,7 @@ export function createTrackService(deps: TrackDeps) {
         sessionId: request.sessionId,
         stepId: request.stepId ?? null,
         type: request.type,
+        videoSecond: request.type === "vsl_progress" ? (request.videoSecond ?? null) : null,
         utm: request.utm,
       });
       if (!stored) return { success: true, data: { stored: false, capi: "skipped" } };

@@ -41,7 +41,7 @@ export function PublishButton({ quizId, document: doc, draftValid, flush, revisi
   return (
     <div className="relative flex items-center gap-2">
       {blocked && (
-        <button type="button" className="text-xs text-amber-700 hover:underline" onClick={() => setOpen((o) => !o)}>
+        <button type="button" className="text-xs text-amber-700 dark:text-amber-400 hover:underline" onClick={() => setOpen((o) => !o)}>
           {!draftValid ? "Campos com erro" : `${issues.length} pendência(s)`}
         </button>
       )}
@@ -49,20 +49,20 @@ export function PublishButton({ quizId, document: doc, draftValid, flush, revisi
         {pending ? "Publicando…" : "Publicar"}
       </Button>
       {open && (blocked || message) && (
-        <div className="absolute top-full right-0 z-20 mt-2 grid w-72 gap-2 rounded-lg border bg-background p-3 text-xs shadow-lg">
+        <div className="absolute top-full right-0 z-20 mt-2 grid w-72 max-w-[calc(100vw-1.5rem)] gap-2 rounded-lg border bg-background p-3 text-xs shadow-lg">
           <button type="button" className="justify-self-end text-muted-foreground" onClick={() => setOpen(false)} aria-label="Fechar">✕</button>
-          {message && <p className={message.ok ? "text-emerald-700" : "text-destructive"}>{message.text}</p>}
+          {message && <p className={message.ok ? "text-emerald-700 dark:text-emerald-400" : "text-destructive"}>{message.text}</p>}
           {!draftValid && <p className="text-destructive">Corrija os campos marcados para publicar.</p>}
           {issues.length > 0 && (
             <ul className="grid gap-1">
               {issues.map((issue, i) => (
                 <li key={i}>
                   {issue.stepId ? (
-                    <button type="button" className="text-left text-amber-700 underline-offset-2 hover:underline" onClick={() => onSelectStep(issue.stepId!)}>
+                    <button type="button" className="text-left text-amber-700 dark:text-amber-400 underline-offset-2 hover:underline" onClick={() => onSelectStep(issue.stepId!)}>
                       {issue.message}
                     </button>
                   ) : (
-                    <span className="text-amber-700">{issue.message}</span>
+                    <span className="text-amber-700 dark:text-amber-400">{issue.message}</span>
                   )}
                 </li>
               ))}
