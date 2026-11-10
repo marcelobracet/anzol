@@ -14,6 +14,7 @@ export function createSupabaseTrackingRepository(db: SupabaseClient): TrackingRe
         session_id: event.sessionId,
         step_id: event.stepId,
         type: event.type,
+        video_second: event.videoSecond,
         utm: event.utm,
       });
       if (error?.code === UNIQUE_VIOLATION) return false; // retry do mesmo event_id

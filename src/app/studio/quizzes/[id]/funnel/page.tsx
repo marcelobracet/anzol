@@ -1,11 +1,14 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { connection } from "next/server";
 import { z } from "zod";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { requireStudioUser } from "@/features/auth/require-studio-user";
 import { buildFunnel } from "@/features/dashboard/funnel";
 import { parseFunnelQuery } from "@/features/dashboard/query";
-import { loadFunnelStats } from "@/features/dashboard/stats";
+import { RetentionCard } from "@/features/dashboard/components/retention-card";
+import { buildRetention } from "@/features/dashboard/retention";
+import { loadFunnelStats, loadRetentionStats } from "@/features/dashboard/stats";
 import { quizService } from "@/features/quiz/server";
 import { playableSteps } from "@/features/runtime/engine";
 
@@ -21,6 +24,7 @@ export default async function FunnelPage({ params, searchParams }: PageProps<"/s
   const quiz = await quizService().findById(id);
   if (!quiz || quiz.status === "archived") notFound();
 
+  await connection(); // o período depende da hora atual: sempre no request
   const query = parseFunnelQuery(await searchParams, new Date());
   const version = quiz.publishedVersionId ? await quizService().findVersion(quiz.publishedVersionId) : null;
 
@@ -40,12 +44,16 @@ export default async function FunnelPage({ params, searchParams }: PageProps<"/s
     );
   }
 
-  const stats = await loadFunnelStats(quiz.id, {
-    versionId: query.scope === "current" ? version.id : null,
-    from: query.from,
-    to: query.to,
-  });
-  const funnel = buildFunnel(playableSteps(version.document), stats.counts, stats.purchases);
+  const filter = { versionId: query.scope === "current" ? version.id : null, from: query.from, to: query.to };
+  const [stats, retentionStats] = await Promise.all([loadFunnelStats(quiz.id, filter), loadRetentionStats(quiz.id, filter)]);
+  const steps = playableSteps(version.document);
+  const funnel = buildFunnel(steps, stats.counts, stats.purchases);
+  const vslViews = (stepId: string) => stats.counts.filter((c) => c.type === "vsl_view" && c.stepId === stepId).reduce((sum, c) => sum + c.sessions, 0);
+  const retentions = steps.flatMap((s) =>
+    s.type === "vsl"
+      ? [{ step: s, retention: buildRetention(retentionStats[s.id] ?? [], { views: vslViews(s.id), ctaAt: s.cta.showAt }) }]
+      : [],
+  );
   const link = (patch: Partial<{ range: number; scope: string }>) =>
     `?${new URLSearchParams({ range: String(patch.range ?? query.days), scope: patch.scope ?? query.scope })}`;
   const chip = (active: boolean) => `rounded-md border px-2.5 py-1 text-sm ${active ? "bg-foreground text-background" : "bg-background hover:bg-muted"}`;
@@ -111,6 +119,10 @@ export default async function FunnelPage({ params, searchParams }: PageProps<"/s
           </ol>
         </CardContent>
       </Card>
+      {retentions.map(({ step, retention }) => (
+        <RetentionCard key={step.id} title={step.name} retention={retention} ctaAt={step.cta.showAt} />
+      ))}
+
       <p className="text-xs text-muted-foreground">
         Compras vêm do webhook da Hotmart e são ligadas ao quiz pelo ID do produto da oferta. Eventos de visitantes da UE são medidos aqui mesmo sem consentimento, mas só vão à Meta com ele.
       </p>

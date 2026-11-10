@@ -29,7 +29,7 @@ function StepRow({ step, index, selected, invalid, canRemove, ...actions }: {
   canRemove: boolean;
 } & Pick<Props, "onSelect" | "onDuplicate" | "onRemove" | "onToggleHidden">) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: step.id });
-  const icon = "rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-30";
+  const icon = "rounded p-1.5 lg:p-1 text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-30";
 
   return (
     <li
@@ -49,7 +49,7 @@ function StepRow({ step, index, selected, invalid, canRemove, ...actions }: {
         </span>
         <span className="block text-xs text-muted-foreground">{STEP_TYPE_LABELS[step.type]}</span>
       </button>
-      <span className="flex opacity-0 group-hover:opacity-100 group-focus-within:opacity-100">
+      <span className="flex [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 [@media(hover:hover)]:group-focus-within:opacity-100">
         <button type="button" className={icon} onClick={() => actions.onToggleHidden(step.id)} aria-label={step.hidden ? "Mostrar" : "Ocultar"}>
           {step.hidden ? <EyeOff className="size-3.5" /> : <Eye className="size-3.5" />}
         </button>

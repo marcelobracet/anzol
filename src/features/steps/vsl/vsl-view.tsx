@@ -20,6 +20,8 @@ export function VslView({ step, ctx, runtime }: StepViewProps<VslStep>) {
   const watched = useSyncExternalStore(subscribeWatched, () => readWatched(step.id), () => 0);
   const offer = runtime.offers.find((o) => o.id === step.cta.offerId);
   const onWatched = useCallback((seconds: number) => saveWatched(step.id, seconds), [step.id]);
+  const { track } = runtime;
+  const onMilestone = useCallback((second: number) => void track("vsl_progress", step.id, { videoSecond: second }), [track, step.id]);
 
   const source = videoSource(step.video, runtime.bunnyHost);
 
@@ -34,7 +36,7 @@ export function VslView({ step, ctx, runtime }: StepViewProps<VslStep>) {
       {step.subheadline && <p className="mt-2 text-center text-base text-balance opacity-80 sm:text-lg">{interpolate(step.subheadline, ctx)}</p>}
       <div className={step.headline || step.subheadline ? "mt-5" : ""}>
         {source ? (
-          <VslPlayer step={step} source={source} locale={runtime.locale} resumeAt={watched} onWatched={onWatched} />
+          <VslPlayer step={step} source={source} locale={runtime.locale} resumeAt={watched} onWatched={onWatched} onMilestone={onMilestone} />
         ) : (
           <VideoPlaceholder vertical={step.aspect === "9:16"} label={t(runtime.locale, "videoSoon")} hint={runtime.embedded ? placeholderHint(step) : undefined} />
         )}

@@ -2,6 +2,7 @@ import "server-only";
 import { devMemoryEnabled, devMemoryStore } from "@/lib/dev/memory-store";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import type { EventCount } from "./funnel";
+import type { RetentionRow } from "./retention";
 
 export type FunnelStats = {
   counts: EventCount[];
@@ -56,4 +57,52 @@ export async function loadFunnelStats(quizId: string, filter: Filter): Promise<F
       revenue: [...revenue].map(([currency, amount]) => ({ currency, amount })),
     },
   };
+}
+
+/** Por step VSL: histograma de segundo máximo assistido por sessão. */
+export type RetentionStats = Record<string, RetentionRow[]>;
+
+function toRetentionStats(rows: { stepId: string; maxSecond: number; sessions: number }[]): RetentionStats {
+  const byStep: RetentionStats = {};
+  for (const { stepId, ...row } of rows) byStep[stepId] = [...(byStep[stepId] ?? []), row];
+  return byStep;
+}
+
+function devRetention(quizId: string, { versionId }: Filter): RetentionStats {
+  const maxBySession = new Map<string, number>();
+  for (const e of devMemoryStore().tracking.events) {
+    if (e.quizId !== quizId || e.type !== "vsl_progress" || e.videoSecond === null || !e.stepId) continue;
+    if (versionId && e.versionId !== versionId) continue;
+    const key = `${e.stepId}|${e.sessionId}`;
+    maxBySession.set(key, Math.max(maxBySession.get(key) ?? 0, e.videoSecond));
+  }
+  const histogram = new Map<string, number>();
+  for (const [key, max] of maxBySession) {
+    const histKey = `${key.split("|")[0]}|${max}`;
+    histogram.set(histKey, (histogram.get(histKey) ?? 0) + 1);
+  }
+  return toRetentionStats(
+    [...histogram].map(([key, sessions]) => {
+      const [stepId, max] = key.split("|");
+      return { stepId, maxSecond: Number(max), sessions };
+    }),
+  );
+}
+
+export async function loadRetentionStats(quizId: string, filter: Filter): Promise<RetentionStats> {
+  if (devMemoryEnabled()) return devRetention(quizId, filter);
+  const { data, error } = await supabaseAdmin().rpc("vsl_retention", {
+    p_quiz_id: quizId,
+    p_version_id: filter.versionId,
+    p_from: filter.from,
+    p_to: filter.to,
+  });
+  if (error) throw new Error(`Supabase vsl_retention: ${error.message}`);
+  return toRetentionStats(
+    (data ?? []).map((r: { step_id: string; max_second: number; sessions: number }) => ({
+      stepId: r.step_id,
+      maxSecond: Number(r.max_second),
+      sessions: Number(r.sessions),
+    })),
+  );
 }

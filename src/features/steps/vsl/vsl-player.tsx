@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { t } from "@/features/runtime/i18n";
 import { pauseOverlayStyle } from "@/features/runtime/page-style";
+import { nextMilestone } from "./milestones";
 import { displayedProgress } from "./progress";
 import type { VslStep } from "./schema";
 import type { VideoSource } from "./video-source";
@@ -13,13 +14,15 @@ type Props = {
   locale: string;
   resumeAt: number; // segundos já assistidos (retomada)
   onWatched: (seconds: number) => void;
+  onMilestone?: (second: number) => void; // retenção: cada marco novo alcançado com som
 };
 
 const HLS_MIME = "application/vnd.apple.mpegurl";
 
 // Começa mudo em autoplay; o toque liga o som. Sem controles de busca.
-export function VslPlayer({ step, source, locale, resumeAt, onWatched }: Props) {
+export function VslPlayer({ step, source, locale, resumeAt, onWatched, onMilestone }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const lastMilestone = useRef<number | null>(null);
   const [started, setStarted] = useState(false);
   const [paused, setPaused] = useState<"no" | "paused" | "ended">("no");
   const [time, setTime] = useState({ current: 0, duration: 0 });
@@ -51,7 +54,17 @@ export function VslPlayer({ step, source, locale, resumeAt, onWatched }: Props) 
     const video = videoRef.current;
     if (!video) return;
     setTime({ current: video.currentTime, duration: video.duration });
-    if (started && !video.muted) onWatched(video.currentTime);
+    if (started && !video.muted) {
+      onWatched(video.currentTime);
+      reportMilestone(video.currentTime);
+    }
+  };
+
+  const reportMilestone = (seconds: number) => {
+    const milestone = nextMilestone(lastMilestone.current, seconds);
+    if (milestone === null) return;
+    lastMilestone.current = milestone;
+    onMilestone?.(milestone);
   };
 
   // Autoplay com som é bloqueado pelo navegador: o toque liga o som e começa do ponto escolhido.
@@ -62,6 +75,7 @@ export function VslPlayer({ step, source, locale, resumeAt, onWatched }: Props) 
     video.muted = false;
     void video.play();
     setStarted(true);
+    reportMilestone(from);
   };
 
   const togglePlay = () => {

@@ -8,7 +8,7 @@ import type { LeadErrors } from "../lead";
 import { loadPixel, pixelTrack } from "./pixel";
 import { fbcFromClick, initialConsent, pixelAllowed, readCookie, readUtm, type ConsentState } from "./utils";
 
-export type TrackExtra = { lead?: { name?: string; email?: string; phone?: string; consented: boolean } };
+export type TrackExtra = { videoSecond?: number; lead?: { name?: string; email?: string; phone?: string; consented: boolean } };
 export type TrackOutcome = { ok: true } | { ok: false; fieldErrors?: LeadErrors };
 export type TrackFn = (type: TrackType, stepId?: string, extra?: TrackExtra) => Promise<TrackOutcome>;
 
@@ -103,6 +103,7 @@ export function useTracker({ enabled, locale, slug, pixelId }: Options) {
         sessionId: sessionId(),
         slug,
         stepId,
+        videoSecond: extra?.videoSecond,
         pageUrl: window.location.href.slice(0, 2000),
         utm: firstTouchUtm(),
         consent: state === "granted" ? "granted" : state === "denied" ? "denied" : "unset",

@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { fullDocumentInput } from "@/features/quiz/document/fixtures";
 import { QuizDocument } from "@/features/quiz/document/schema";
 import type { PublishedQuiz } from "@/features/runtime/published-source";
 import { createTrackService, type TrackDeps } from "./track-service";
@@ -130,5 +131,34 @@ describe("track", () => {
 
   it("sem token ou sem Pixel ID não envia", async () => {
     expect(await createTrackService({ ...deps, capiToken: undefined }).track(request(body()))).toMatchObject({ data: { capi: "skipped" } });
+  });
+});
+
+describe("vsl_progress (retenção do vídeo)", () => {
+  const vslQuiz = (): PublishedQuiz => ({ ...quiz(), document: QuizDocument.parse(fullDocumentInput()) });
+  const progress = (over: Record<string, unknown> = {}) => body({ type: "vsl_progress", stepId: "vsl_1", videoSecond: 30, ...over });
+
+  beforeEach(() => {
+    deps.loadQuiz = vi.fn().mockResolvedValue(vslQuiz());
+  });
+
+  it("grava o segundo assistido e não vai para a Meta", async () => {
+    const result = await createTrackService(deps).track(request(progress()));
+    expect(result).toEqual({ success: true, data: { stored: true, capi: "skipped" } });
+    expect(deps.events[0]).toMatchObject({ type: "vsl_progress", stepId: "vsl_1", videoSecond: 30 });
+    expect(deps.capi).not.toHaveBeenCalled();
+  });
+
+  it("recusa sem segundo, fora da grade de marcos ou fora de um step VSL", async () => {
+    const service = createTrackService(deps);
+    expect(await service.track(request(progress({ videoSecond: undefined })))).toMatchObject({ success: false, status: 400 });
+    expect(await service.track(request(progress({ videoSecond: 31 })))).toMatchObject({ success: false, status: 400 });
+    expect(await service.track(request(progress({ stepId: "timer_1" })))).toMatchObject({ success: false, status: 400 });
+    expect(deps.events).toHaveLength(0);
+  });
+
+  it("outros eventos guardam videoSecond nulo mesmo se o cliente mandar", async () => {
+    await createTrackService(deps).track(request(body({ type: "step_view", stepId: "vsl_1", videoSecond: 30 })));
+    expect(deps.events[0]).toMatchObject({ type: "step_view", videoSecond: null });
   });
 });
