@@ -11,6 +11,14 @@ const doc = QuizDocument.parse({
   steps: [
     { id: "intro", type: "info", name: "Intro", title: "Oi", ctaLabel: "Ir" },
     {
+      id: "q_one",
+      type: "question",
+      name: "Pergunta",
+      title: "Qual?",
+      selection: { mode: "multi", ctaLabel: "Seguir" },
+      options: [{ id: "opt_a", label: "A" }, { id: "opt_b", label: "B" }],
+    },
+    {
       id: "lead_1",
       type: "leadForm",
       name: "Lead",
@@ -130,5 +138,27 @@ describe("track", () => {
 
   it("sem token ou sem Pixel ID não envia", async () => {
     expect(await createTrackService({ ...deps, capiToken: undefined }).track(request(body()))).toMatchObject({ data: { capi: "skipped" } });
+  });
+
+  it("resposta grava as opções escolhidas e não vai à Meta", async () => {
+    const result = await createTrackService(deps).track(request(body({ type: "answer", stepId: "q_one", answer: { optionIds: ["opt_b", "opt_a"] } })));
+    expect(result).toEqual({ success: true, data: { stored: true, capi: "skipped" } });
+    expect(deps.events[0]).toMatchObject({ type: "answer", stepId: "q_one", answer: { optionIds: ["opt_b", "opt_a"] } });
+    expect(deps.capi).not.toHaveBeenCalled();
+  });
+
+  it("outros eventos gravam answer nulo", async () => {
+    await createTrackService(deps).track(request(body()));
+    expect(deps.events[0]).toMatchObject({ answer: null });
+  });
+
+  it("recusa resposta fora de pergunta, sem opções ou com opção que não existe", async () => {
+    const service = createTrackService(deps);
+    const answer = (stepId: string, optionIds: string[] | undefined) =>
+      service.track(request(body({ type: "answer", stepId, answer: optionIds && { optionIds } })));
+    expect(await answer("intro", ["opt_a"])).toMatchObject({ success: false, status: 400 });
+    expect(await answer("q_one", undefined)).toMatchObject({ success: false, status: 400 });
+    expect(await answer("q_one", ["opt_z"])).toMatchObject({ success: false, status: 400 });
+    expect(deps.events).toHaveLength(0);
   });
 });

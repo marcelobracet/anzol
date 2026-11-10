@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { connection } from "next/server";
 import { z } from "zod";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { requireStudioUser } from "@/features/auth/require-studio-user";
@@ -21,6 +22,7 @@ export default async function FunnelPage({ params, searchParams }: PageProps<"/s
   const quiz = await quizService().findById(id);
   if (!quiz || quiz.status === "archived") notFound();
 
+  await connection(); // "agora" é da requisição, não do prerender
   const query = parseFunnelQuery(await searchParams, new Date());
   const version = quiz.publishedVersionId ? await quizService().findVersion(quiz.publishedVersionId) : null;
 

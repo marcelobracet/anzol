@@ -7,6 +7,7 @@ import { MediaView } from "@/features/media/components/media-view";
 import { StepView } from "@/features/steps/registry";
 import { ConsentBanner } from "@/features/tracking/client/consent-banner";
 import { useTracker } from "@/features/tracking/client/use-tracker";
+import { answerToTrack } from "../answer-event";
 import { t } from "../i18n";
 import { interpolate } from "../interpolate";
 import { initialState, playableSteps, progress, reduce, type QuizAction } from "../engine";
@@ -59,6 +60,8 @@ export function QuizPlayer({
   const started = useRef(false);
   useEffect(() => {
     if (!current || trackedIndex.current === state.index) return;
+    const answer = trackedIndex.current === null ? null : answerToTrack(steps, trackedIndex.current, state.index, state.answers);
+    if (answer) void track("answer", answer.stepId, { answer: { optionIds: answer.optionIds } });
     trackedIndex.current = state.index;
     if (!started.current && state.index === 0) {
       started.current = true;
@@ -66,7 +69,7 @@ export function QuizPlayer({
     }
     void track("step_view", current.id);
     if (current.type === "vsl") void track("vsl_view", current.id);
-  }, [state.index, current, track]);
+  }, [state.index, state.answers, current, steps, track]);
 
   useEffect(() => {
     if (firstRender.current) {
