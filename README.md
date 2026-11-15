@@ -77,6 +77,8 @@ O bypass de auth (`AUTH_DEV_BYPASS_EMAIL`) só funciona em `next dev` e em previ
 
 ## Rastreamento
 
+Conceitos (rastreamento x trackeamento) e plano do envio server-side do Purchase: [docs/rastreamento-server-side.md](docs/rastreamento-server-side.md).
+
 - `POST /api/t` (domínio da oferta): quiz_start, step_view, vsl_view, lead, checkout_click. Grava em `events` (único por `event_id`) e, para PageView, ViewContent, Lead e InitiateCheckout, chama a Conversions API com o **mesmo `event_id`** do `fbq` (a Meta deduplica). Limite de 60 eventos/min por IP por instância.
 - Consentimento: exigido quando o locale do quiz é europeu **ou** o IP é do EEE/UK/CH (`x-vercel-ip-country`, via `GET /api/t/geo`). Sem aceite, o Pixel não carrega e a CAPI não é chamada; o funil interno continua contando.
 - Lead: e-mail e telefone (E.164 com libphonenumber) validados no navegador e no servidor; na CAPI vão com SHA-256.
