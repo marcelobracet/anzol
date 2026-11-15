@@ -136,12 +136,13 @@ export function VslPlayer({ step, source, locale, resumeAt, onWatched, onMilesto
             )}
           </div>
         )}
+        {step.progressBar.enabled && (
+          // Por cima do vídeo, na base: sempre visível junto com a imagem, como nos players de VSL.
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-2 bg-black/35" aria-hidden>
+            <div className="h-full transition-[width] duration-500 ease-linear" style={{ width: `${progress * 100}%`, background: accent }} />
+          </div>
+        )}
       </div>
-      {step.progressBar.enabled && (
-        <div className="h-1.5 bg-white/20" aria-hidden>
-          <div className="h-full transition-[width] duration-500 ease-linear" style={{ width: `${progress * 100}%`, background: accent }} />
-        </div>
-      )}
     </div>
   );
 }
@@ -161,13 +162,36 @@ const UNMUTE_SIZE_CLASS: Record<UnmuteButton["size"], string> = {
   xl: "w-[85%] px-6 py-5 text-xl",
 };
 
+// Botão de play no formato de "pílula arredondada" (proporção ~1,43:1), com o texto embaixo.
+const YOUTUBE_SIZE: Record<UnmuteButton["size"], { play: string; label: string }> = {
+  md: { play: "h-11 w-16", label: "text-base" },
+  lg: { play: "h-[4.25rem] w-24", label: "text-lg" },
+  xl: { play: "h-[5.5rem] w-32", label: "text-xl" },
+};
+
 function UnmuteCta({ button, label, onClick }: { button: UnmuteButton; label: string; onClick: () => void }) {
   const animation = button.animation === "none" ? "" : `q-anim-${button.animation}`;
+  const style = unmuteButtonStyle(button);
+  if (button.variant === "youtube") {
+    const size = YOUTUBE_SIZE[button.size];
+    return (
+      <button type="button" onClick={onClick} className="flex flex-col items-center gap-3">
+        <span className={`grid place-items-center rounded-[28%] shadow-2xl ${size.play} ${animation}`} style={{ background: style.background }}>
+          <svg viewBox="0 0 24 24" className="ml-[6%] w-[38%] fill-white" aria-hidden>
+            <path d="M7 4.5v15l12.5-7.5z" />
+          </svg>
+        </span>
+        <span className={`max-w-[16rem] text-center font-bold leading-tight text-balance text-white [text-shadow:0_1px_8px_rgb(0_0_0/0.75)] ${size.label}`}>
+          🔊 {label}
+        </span>
+      </button>
+    );
+  }
   return (
     <button
       type="button"
       onClick={onClick}
-      style={unmuteButtonStyle(button)}
+      style={style}
       className={`flex items-center justify-center gap-2 rounded-[var(--q-radius)] font-bold text-balance shadow-xl ${UNMUTE_SIZE_CLASS[button.size]} ${animation}`}
     >
       <span aria-hidden>🔊</span>

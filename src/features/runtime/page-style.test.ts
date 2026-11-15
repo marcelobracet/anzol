@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { DEFAULT_THEME, Theme } from "@/features/quiz/document/schema";
 import { VslStep } from "@/features/steps/vsl/schema";
-import { backgroundStyle, bannerStyle, pauseOverlayStyle } from "./page-style";
+import { backgroundStyle, bannerStyle, pauseOverlayStyle, unmuteButtonStyle } from "./page-style";
 
 const vsl = (extra: object = {}) =>
   VslStep.parse({ type: "vsl", id: "vsl1", name: "VSL", cta: { label: "Comprar", showAt: 60, offerId: "offer1" }, ...extra });
@@ -92,5 +92,18 @@ describe("pauseOverlayStyle", () => {
 
   it("sem cor de texto, escolhe a legível sobre a cor do véu", () => {
     expect(pauseOverlayStyle({ overlay: "#FFFFFF", opacity: 90, blur: false }).color).toBe("#000000");
+  });
+});
+
+describe("unmuteButtonStyle", () => {
+  const base = { variant: "youtube" as const, size: "lg" as const, animation: "pulse" as const, overlayOpacity: 30 };
+  it("youtube sem cor: vermelho com ícone branco", () => {
+    expect(unmuteButtonStyle(base)).toEqual({ background: "#FF0000", color: "#FFFFFF" });
+  });
+  it("cor escolhida vale em qualquer estilo", () => {
+    expect(unmuteButtonStyle({ ...base, background: "#18B957" }).background).toBe("#18B957");
+  });
+  it("pill sem cor: primária do tema", () => {
+    expect(unmuteButtonStyle({ ...base, variant: "pill" }).background).toBe("var(--q-primary)");
   });
 });

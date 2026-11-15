@@ -55,7 +55,10 @@ export function bannerStyle(style: BannerStyle): { background: string; color: st
 const rgba = (hex: string, alpha: number) =>
   `rgba(${parseInt(hex.slice(1, 3), 16)}, ${parseInt(hex.slice(3, 5), 16)}, ${parseInt(hex.slice(5, 7), 16)}, ${alpha})`;
 
+export const YOUTUBE_RED = "#FF0000";
+
 export function unmuteButtonStyle(button: UnmuteButton): { background: string; color: string } {
+  if (!button.background && button.variant === "youtube") return { background: YOUTUBE_RED, color: button.text ?? "#FFFFFF" };
   if (!button.background) return { background: "var(--q-primary)", color: button.text ?? "var(--q-on-primary)" };
   return { background: button.background, color: button.text ?? readableOn(button.background) };
 }

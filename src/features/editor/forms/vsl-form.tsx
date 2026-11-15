@@ -42,6 +42,11 @@ const UNMUTE_SIZES: { value: UnmuteButton["size"]; label: string }[] = [
   { value: "xl", label: "Extra grande (quase a largura do vídeo)" },
 ];
 
+const UNMUTE_VARIANTS: { value: UnmuteButton["variant"]; label: string }[] = [
+  { value: "youtube", label: "Play estilo YouTube (texto embaixo)" },
+  { value: "pill", label: "Botão com texto dentro" },
+];
+
 const UNMUTE_ANIMATIONS: { value: UnmuteButton["animation"]; label: string }[] = [
   { value: "pulse", label: "Pulsar (cresce e diminui)" },
   { value: "blink", label: "Piscar" },
@@ -95,13 +100,14 @@ export function VslForm({ step, onChange, issues, offers, quizId, cloudName }: S
       )}
       <h3 className="text-sm font-semibold">Botão de ativar o som</h3>
       <p className="text-xs text-muted-foreground">O vídeo começa mudo. Só conta como play (e entra na retenção) quem toca neste botão.</p>
+      <SelectField label="Estilo" value={unmuteButton.variant} options={UNMUTE_VARIANTS} onChange={(variant) => setUnmute({ variant })} />
       <TextField label="Texto do botão" placeholder="Padrão: “Toque para ativar o som”" value={unmuteButton.label} onChange={(v) => setUnmute({ label: v || undefined })} />
       <div className="grid grid-cols-2 gap-2">
         <SelectField label="Tamanho" value={unmuteButton.size} options={UNMUTE_SIZES} onChange={(size) => setUnmute({ size })} />
         <SelectField label="Animação" value={unmuteButton.animation} options={UNMUTE_ANIMATIONS} onChange={(animation) => setUnmute({ animation })} />
       </div>
       <div className="grid grid-cols-2 gap-2">
-        <OptionalColorField label="Fundo do botão" value={unmuteButton.background} fallback="primária" onChange={(background) => setUnmute({ background })} />
+        <OptionalColorField label="Cor do botão" value={unmuteButton.background} fallback={unmuteButton.variant === "youtube" ? "vermelho" : "primária"} onChange={(background) => setUnmute({ background })} />
         <OptionalColorField label="Texto do botão" value={unmuteButton.text} fallback="automático" onChange={(text) => setUnmute({ text })} />
       </div>
       <NumberField
@@ -117,7 +123,7 @@ export function VslForm({ step, onChange, issues, offers, quizId, cloudName }: S
       {progressBar.enabled && (
         <NumberField
           label="Aceleração (k)"
-          hint="1 = real. 3 = chega a 50% com ~20% do vídeo."
+          hint="Quanto maior, mais rápido no começo. 3: 50% da barra com 20% do vídeo · 5: com 13% · 8: com 8%. Vídeo longo (8+ min): use 5 a 8."
           min={1}
           max={10}
           step={0.5}
