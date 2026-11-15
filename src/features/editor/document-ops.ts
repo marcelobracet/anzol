@@ -87,7 +87,7 @@ export function defaultStep(type: AddableStepType, offerId = ""): Step {
         aspect: "9:16",
         bannerStyle: { icon: "none", animation: "pulse" },
         pauseScreen: { opacity: 55, blur: false },
-        unmuteButton: { size: "lg", animation: "pulse", overlayOpacity: 30 },
+        unmuteButton: { variant: "youtube", size: "lg", animation: "pulse", overlayOpacity: 30 },
         progressBar: { enabled: true, k: 3 },
         cta: { label: "Quero garantir minha vaga", showAt: 0, offerId },
         toast: { enabled: false, leadSeconds: 0, windowHours: 48 },

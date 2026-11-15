@@ -28,13 +28,16 @@ export type PauseScreen = z.infer<typeof PauseScreen>;
 
 export const UNMUTE_SIZES = ["md", "lg", "xl"] as const;
 export const UNMUTE_ANIMATIONS = ["none", "pulse", "bounce", "shake", "blink"] as const;
+export const UNMUTE_VARIANTS = ["youtube", "pill"] as const;
 
 // Botão sobre o vídeo mudo em autoplay. É o que transforma visita em play com som (métrica de retenção).
 export const UnmuteButton = z.object({
+  // youtube: botão de play grande (vermelho por padrão) com o texto embaixo. pill: botão com o texto dentro.
+  variant: z.enum(UNMUTE_VARIANTS).default("youtube"),
   label: Text.optional(), // padrão: texto do idioma
   size: z.enum(UNMUTE_SIZES).default("lg"),
   animation: z.enum(UNMUTE_ANIMATIONS).default("pulse"),
-  background: Hex.optional(), // padrão: cor primária do tema
+  background: Hex.optional(), // padrão: vermelho no youtube, cor primária no pill
   text: Hex.optional(), // padrão: contraste automático
   overlayOpacity: z.number().int().min(0).max(100).default(30), // véu preto sobre o vídeo mudo
 });
@@ -45,7 +48,7 @@ export const VslStep = StepBase.extend({
   banner: Text.optional(), // faixa no topo da página
   bannerStyle: BannerStyle.default({ icon: "none", animation: "pulse" }),
   pauseScreen: PauseScreen.default({ opacity: 55, blur: false }),
-  unmuteButton: UnmuteButton.default({ size: "lg", animation: "pulse", overlayOpacity: 30 }),
+  unmuteButton: UnmuteButton.default({ variant: "youtube", size: "lg", animation: "pulse", overlayOpacity: 30 }),
   headline: Text.optional(),
   subheadline: Text.optional(),
   video: VideoMedia.optional(), // sem vídeo, mostra um espaço reservado
