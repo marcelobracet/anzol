@@ -181,7 +181,8 @@ function UnmuteCta({ button, label, onClick }: { button: UnmuteButton; label: st
             <path d="M7 4.5v15l12.5-7.5z" />
           </svg>
         </span>
-        <span className={`max-w-[16rem] text-center font-bold leading-tight text-balance text-white [text-shadow:0_1px_8px_rgb(0_0_0/0.75)] ${size.label}`}>
+        {/* Pílula escura: o texto não se mistura com a legenda gravada no vídeo. */}
+        <span className={`max-w-[18rem] rounded-full bg-black/70 px-4 py-2 text-center font-bold leading-tight text-balance text-white backdrop-blur-sm ${size.label}`}>
           🔊 {label}
         </span>
       </button>
