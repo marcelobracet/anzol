@@ -2,10 +2,10 @@
 
 import { useEffect, useRef, useState } from "react";
 import { t } from "@/features/runtime/i18n";
-import { pauseOverlayStyle } from "@/features/runtime/page-style";
+import { pauseOverlayStyle, unmuteButtonStyle, unmuteOverlayStyle } from "@/features/runtime/page-style";
 import { nextMilestone } from "./milestones";
 import { displayedProgress } from "./progress";
-import type { VslStep } from "./schema";
+import type { UnmuteButton, VslStep } from "./schema";
 import type { VideoSource } from "./video-source";
 
 type Props = {
@@ -124,7 +124,7 @@ export function VslPlayer({ step, source, locale, resumeAt, onWatched, onMilesto
           </div>
         )}
         {!started && (
-          <div style={resumeAt > 0 ? overlay : undefined} className={`absolute inset-0 grid place-items-center p-6 ${resumeAt > 0 ? "" : "bg-black/45 text-white"}`}>
+          <div style={resumeAt > 0 ? overlay : unmuteOverlayStyle(step.unmuteButton)} className="absolute inset-0 grid place-items-center p-6">
             {resumeAt > 0 ? (
               <div className="grid justify-items-start gap-4">
                 <p className="text-lg font-bold text-balance">{screen.title || t(locale, "resumeTitle")}</p>
@@ -132,13 +132,7 @@ export function VslPlayer({ step, source, locale, resumeAt, onWatched, onMilesto
                 <ResumeOption icon="↺" label={restartLabel} onClick={() => start(0)} />
               </div>
             ) : (
-              <button
-                type="button"
-                onClick={() => start(0)}
-                className="rounded-[var(--q-radius)] bg-[var(--q-primary)] px-5 py-3 text-base font-semibold text-[var(--q-on-primary)] shadow-lg"
-              >
-                🔊 {t(locale, "tapToUnmute")}
-              </button>
+              <UnmuteCta button={step.unmuteButton} label={step.unmuteButton.label || t(locale, "tapToUnmute")} onClick={() => start(0)} />
             )}
           </div>
         )}
@@ -156,6 +150,27 @@ function ResumeOption({ icon, label, onClick }: { icon: string; label: string; o
   return (
     <button type="button" onClick={onClick} className="flex items-center gap-3 text-base font-semibold">
       <span className="grid size-9 place-items-center rounded-full border-2 border-current text-sm">{icon}</span>
+      {label}
+    </button>
+  );
+}
+
+const UNMUTE_SIZE_CLASS: Record<UnmuteButton["size"], string> = {
+  md: "px-5 py-3 text-base",
+  lg: "px-7 py-4 text-lg",
+  xl: "w-[85%] px-6 py-5 text-xl",
+};
+
+function UnmuteCta({ button, label, onClick }: { button: UnmuteButton; label: string; onClick: () => void }) {
+  const animation = button.animation === "none" ? "" : `q-anim-${button.animation}`;
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      style={unmuteButtonStyle(button)}
+      className={`flex items-center justify-center gap-2 rounded-[var(--q-radius)] font-bold text-balance shadow-xl ${UNMUTE_SIZE_CLASS[button.size]} ${animation}`}
+    >
+      <span aria-hidden>🔊</span>
       {label}
     </button>
   );

@@ -1,6 +1,6 @@
 import type { CSSProperties } from "react";
 import type { PageBackground } from "@/features/quiz/document/schema";
-import type { BannerStyle, PauseScreen } from "@/features/steps/vsl/schema";
+import type { BannerStyle, PauseScreen, UnmuteButton } from "@/features/steps/vsl/schema";
 import { readableOn } from "./theme";
 
 type Layer = { image: string; size: string };
@@ -54,6 +54,15 @@ export function bannerStyle(style: BannerStyle): { background: string; color: st
 
 const rgba = (hex: string, alpha: number) =>
   `rgba(${parseInt(hex.slice(1, 3), 16)}, ${parseInt(hex.slice(3, 5), 16)}, ${parseInt(hex.slice(5, 7), 16)}, ${alpha})`;
+
+export function unmuteButtonStyle(button: UnmuteButton): { background: string; color: string } {
+  if (!button.background) return { background: "var(--q-primary)", color: button.text ?? "var(--q-on-primary)" };
+  return { background: button.background, color: button.text ?? readableOn(button.background) };
+}
+
+export function unmuteOverlayStyle(button: UnmuteButton): CSSProperties {
+  return { background: rgba("#000000", button.overlayOpacity / 100), color: "#FFFFFF" };
+}
 
 export function pauseOverlayStyle(screen: PauseScreen): CSSProperties {
   const overlay = screen.overlay ?? "#000000";
