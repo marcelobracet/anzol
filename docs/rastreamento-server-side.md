@@ -42,6 +42,24 @@ Hotmart ── webhook: comprador (e-mail, telefone, nome) + xcod ──► Serv
 Não há seta Hotmart → Meta: a compra sai do **nosso** servidor, com os dados juntos.
 O "S" do diagrama é o **Stape** (sGTM hospedado no próprio subdomínio). No nosso caso o próprio Anzol faz o papel do sGTM: já roda no servidor e já fala com a CAPI. Stape/sGTM no Hetzner só faz sentido se quisermos centralizar várias ferramentas num lugar só.
 
+## Passo a passo do fluxo (e o erro que mais se comete)
+
+1. **Lead entra no quiz/VSL** (Anzol). O navegador tem os cookies `_fbp` e `_fbc` (este só existe se veio de clique em anúncio, pelo `fbclid`).
+2. **Clique no checkout = momento de guardar.** O Anzol grava no banco, pelo **indexador** (`xcod`): `fbp`, `fbc`, IP e user agent **da requisição do navegador do lead**, a URL da página e as UTMs. O mesmo `xcod` vai no link do checkout da Hotmart.
+3. **Compra na Hotmart.** O comprador informa e-mail, telefone e nome no checkout.
+4. **Webhook chega no nosso servidor** com os dados do comprador e o `xcod`.
+5. **Junta e envia:** busca pelo `xcod` os dados de navegação **gravados no passo 2**, soma os dados do comprador (com hash) e envia o Purchase pela CAPI.
+
+> ⚠️ **Erro clássico: usar IP e user agent da requisição do webhook.**
+> Quem faz a requisição do webhook é o **servidor da Hotmart**, não o comprador. O IP e o user agent dessa chamada são de um datacenter da Hotmart. Mandar isso para a Meta é dizer que a compra foi feita por um servidor: a correspondência piora e o sinal fica errado.
+> **Regra:** dados de navegação (`fbp`, `fbc`, IP, user agent, URL) vêm **sempre do banco**, gravados **antes**, quando o lead estava na página. Do webhook só se aproveitam os **dados do comprador** (e-mail, telefone, nome, país), o valor, a moeda, a transação e o `xcod`.
+
+Outros cuidados do envio:
+- `event_time` = horário da aprovação da compra (não o da chegada do webhook, que pode ser reenviado).
+- `event_id` = código da transação Hotmart: reenvios do webhook não viram compras duplicadas.
+- `action_source: "website"` e `event_source_url` = URL da página gravada no passo 2.
+- Sem `xcod` ou sem registro no banco (ex.: compra por link direto): enviar só com os dados do comprador, sem inventar navegação.
+
 ## O que o Anzol já faz
 
 - PageView, ViewContent, Lead e InitiateCheckout pelo Pixel **e** pela CAPI, com o mesmo `event_id` (dedup).
