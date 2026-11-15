@@ -14,7 +14,7 @@ import { videoSource } from "./video-source";
 import { VslPlayer } from "./vsl-player";
 import { readWatched, saveWatched, subscribeWatched } from "./watched-store";
 
-export function VslView({ step, ctx, runtime }: StepViewProps<VslStep>) {
+export function VslView({ step, ctx, runtime, cloudName }: StepViewProps<VslStep>) {
   // Tempo máximo assistido sobrevive a reload: quem já viu o CTA não precisa assistir de novo.
   // No servidor vale 0 (não há localStorage), o que evita divergência na hidratação.
   const watched = useSyncExternalStore(subscribeWatched, () => readWatched(step.id), () => 0);
@@ -23,7 +23,7 @@ export function VslView({ step, ctx, runtime }: StepViewProps<VslStep>) {
   const { track } = runtime;
   const onMilestone = useCallback((second: number) => void track("vsl_progress", step.id, { videoSecond: second }), [track, step.id]);
 
-  const source = videoSource(step.video, runtime.bunnyHost);
+  const source = videoSource(step.video, runtime.bunnyHost, cloudName);
 
   // No preview o CTA fica sempre visível para revisão.
   const showCta = runtime.embedded || ctaVisible(watched, step.cta.showAt);

@@ -26,11 +26,26 @@ export const PauseScreen = z.object({
 });
 export type PauseScreen = z.infer<typeof PauseScreen>;
 
+export const UNMUTE_SIZES = ["md", "lg", "xl"] as const;
+export const UNMUTE_ANIMATIONS = ["none", "pulse", "bounce", "shake", "blink"] as const;
+
+// Botão sobre o vídeo mudo em autoplay. É o que transforma visita em play com som (métrica de retenção).
+export const UnmuteButton = z.object({
+  label: Text.optional(), // padrão: texto do idioma
+  size: z.enum(UNMUTE_SIZES).default("lg"),
+  animation: z.enum(UNMUTE_ANIMATIONS).default("pulse"),
+  background: Hex.optional(), // padrão: cor primária do tema
+  text: Hex.optional(), // padrão: contraste automático
+  overlayOpacity: z.number().int().min(0).max(100).default(30), // véu preto sobre o vídeo mudo
+});
+export type UnmuteButton = z.infer<typeof UnmuteButton>;
+
 export const VslStep = StepBase.extend({
   type: z.literal("vsl"),
   banner: Text.optional(), // faixa no topo da página
   bannerStyle: BannerStyle.default({ icon: "none", animation: "pulse" }),
   pauseScreen: PauseScreen.default({ opacity: 55, blur: false }),
+  unmuteButton: UnmuteButton.default({ size: "lg", animation: "pulse", overlayOpacity: 30 }),
   headline: Text.optional(),
   subheadline: Text.optional(),
   video: VideoMedia.optional(), // sem vídeo, mostra um espaço reservado

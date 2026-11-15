@@ -1,6 +1,6 @@
 "use client";
 
-import type { BannerStyle, PauseScreen, VslStep } from "@/features/steps/vsl/schema";
+import type { BannerStyle, PauseScreen, UnmuteButton, VslStep } from "@/features/steps/vsl/schema";
 import { DurationField } from "../components/duration-field";
 import { CheckboxField, NumberField, OptionalColorField, SelectField, TextField } from "../components/fields";
 import { MediaField } from "../components/media-field";
@@ -36,11 +36,26 @@ const ANIMATIONS: { value: BannerStyle["animation"]; label: string }[] = [
   { value: "none", label: "Parado" },
 ];
 
+const UNMUTE_SIZES: { value: UnmuteButton["size"]; label: string }[] = [
+  { value: "md", label: "Médio" },
+  { value: "lg", label: "Grande" },
+  { value: "xl", label: "Extra grande (quase a largura do vídeo)" },
+];
+
+const UNMUTE_ANIMATIONS: { value: UnmuteButton["animation"]; label: string }[] = [
+  { value: "pulse", label: "Pulsar (cresce e diminui)" },
+  { value: "blink", label: "Piscar" },
+  { value: "bounce", label: "Pular" },
+  { value: "shake", label: "Balançar" },
+  { value: "none", label: "Parado" },
+];
+
 export function VslForm({ step, onChange, issues, offers, quizId, cloudName }: StepFormProps<VslStep>) {
   const set = (patch: Partial<VslStep>) => onChange({ ...step, ...patch });
-  const { cta, toast, progressBar, bannerStyle, pauseScreen } = step;
+  const { cta, toast, progressBar, bannerStyle, pauseScreen, unmuteButton } = step;
   const setBanner = (patch: Partial<BannerStyle>) => set({ bannerStyle: { ...bannerStyle, ...patch } });
   const setPause = (patch: Partial<PauseScreen>) => set({ pauseScreen: { ...pauseScreen, ...patch } });
+  const setUnmute = (patch: Partial<UnmuteButton>) => set({ unmuteButton: { ...unmuteButton, ...patch } });
   return (
     <div className="grid gap-4">
       <h3 className="text-sm font-semibold">Textos da página</h3>
@@ -69,6 +84,35 @@ export function VslForm({ step, onChange, issues, offers, quizId, cloudName }: S
       <h3 className="text-sm font-semibold">Vídeo</h3>
       <SelectField label="Formato" value={step.aspect} options={ASPECTS} onChange={(aspect) => set({ aspect })} />
       <VideoField value={step.video} quizId={quizId} onChange={(video) => set({ video })} error={errorAt(issues, "video")} />
+      {step.video && (
+        <MediaField
+          label="Capa do vídeo (aparece enquanto o vídeo carrega)"
+          value={step.video.poster}
+          allowAnimated={false}
+          cloudName={cloudName}
+          onChange={(poster) => step.video && set({ video: { ...step.video, poster: poster?.kind === "image" ? poster : undefined } })}
+        />
+      )}
+      <h3 className="text-sm font-semibold">Botão de ativar o som</h3>
+      <p className="text-xs text-muted-foreground">O vídeo começa mudo. Só conta como play (e entra na retenção) quem toca neste botão.</p>
+      <TextField label="Texto do botão" placeholder="Padrão: “Toque para ativar o som”" value={unmuteButton.label} onChange={(v) => setUnmute({ label: v || undefined })} />
+      <div className="grid grid-cols-2 gap-2">
+        <SelectField label="Tamanho" value={unmuteButton.size} options={UNMUTE_SIZES} onChange={(size) => setUnmute({ size })} />
+        <SelectField label="Animação" value={unmuteButton.animation} options={UNMUTE_ANIMATIONS} onChange={(animation) => setUnmute({ animation })} />
+      </div>
+      <div className="grid grid-cols-2 gap-2">
+        <OptionalColorField label="Fundo do botão" value={unmuteButton.background} fallback="primária" onChange={(background) => setUnmute({ background })} />
+        <OptionalColorField label="Texto do botão" value={unmuteButton.text} fallback="automático" onChange={(text) => setUnmute({ text })} />
+      </div>
+      <NumberField
+        label="Escurecer o vídeo mudo (%)"
+        hint="0 = vídeo limpo. Mais claro deixa o vídeo aparecer e gera curiosidade."
+        min={0}
+        max={100}
+        step={5}
+        value={unmuteButton.overlayOpacity}
+        onChange={(v) => setUnmute({ overlayOpacity: v ?? 0 })}
+      />
       <CheckboxField label="Barra de progresso acelerada" checked={progressBar.enabled} onChange={(enabled) => set({ progressBar: { ...progressBar, enabled } })} />
       {progressBar.enabled && (
         <NumberField
