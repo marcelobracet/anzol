@@ -84,6 +84,9 @@ O bypass de auth (`AUTH_DEV_BYPASS_EMAIL`) só funciona em `next dev` e em previ
 
 ## Webhook Hotmart
 
+Antes de toda oferta nova, rode o [checklist de lançamento](docs/checklist-nova-oferta.md) (webhook, `HOTMART_HOTTOK`, Pixel + API de Conversão no produto da Hotmart).
+
+
 `POST https://<STUDIO_HOST>/api/webhooks/hotmart` com `X-HOTMART-HOTTOK` (= `HOTMART_HOTTOK`). No Cloudflare Access, crie a regra **Bypass** só para `/api/webhooks/*`. Idempotente por `order_id` (reembolso/chargeback só atualiza o status). Grava só primeiro nome, cidade e país. O quiz é achado pelo `productId` da oferta publicada.
 
 ## Funil
