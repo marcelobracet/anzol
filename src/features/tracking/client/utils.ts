@@ -31,3 +31,11 @@ export function initialConsent({ euLocale, euVisitor, saved }: { euLocale: boole
 }
 
 export const pixelAllowed = (state: ConsentState) => state === "not_required" || state === "granted";
+
+/**
+ * Chave de sessão gravada no evento. Progresso do vídeo usa o id do navegador (localStorage), o mesmo
+ * alcance do "continuar de onde parou": quem fecha e volta para continuar é a mesma pessoa, não duas.
+ */
+export function retentionKey(type: string, ids: { session: string; viewer: string | null }): string {
+  return type === "vsl_progress" && ids.viewer ? ids.viewer : ids.session;
+}

@@ -1,6 +1,6 @@
 import type { PublishedQuiz } from "@/features/runtime/published-source";
 import type { LeadFormStep } from "@/features/steps/lead-form/schema";
-import { isMilestone } from "@/features/steps/vsl/milestones";
+import { isMilestoneWith } from "@/features/steps/vsl/milestones";
 import { buildCapiEvent, type CapiEvent } from "./capi";
 import { consentRequired } from "./consent";
 import { META_EVENT, TrackRequest } from "./event-types";
@@ -94,7 +94,7 @@ export function createTrackService(deps: TrackDeps) {
 
       if (request.type === "vsl_progress") {
         if (step?.type !== "vsl") return invalid("Progresso fora de um step VSL");
-        if (request.videoSecond === undefined || !isMilestone(request.videoSecond)) return invalid("Segundo do vídeo inválido");
+        if (request.videoSecond === undefined || !isMilestoneWith(request.videoSecond, [step.cta.showAt])) return invalid("Segundo do vídeo inválido");
       }
 
       let lead: NormalizedLead | undefined;

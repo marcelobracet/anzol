@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createRateLimiter } from "./rate-limit";
+import { createRateLimiter, createTrackLimiter } from "./rate-limit";
 
 describe("createRateLimiter", () => {
   it("permite até o limite por janela e por chave", () => {
@@ -19,5 +19,20 @@ describe("createRateLimiter", () => {
     now = 100;
     limiter.allow("z");
     expect(limiter.size()).toBe(1);
+  });
+});
+
+describe("createTrackLimiter", () => {
+  // Operadora móvel com CGNAT: muita gente no mesmo IP assistindo o vídeo ao mesmo tempo.
+  it("progresso do vídeo tem cota própria e não tira a vez de lead/checkout", () => {
+    const limiter = createTrackLimiter({ eventsPerMinute: 2, progressPerMinute: 5, now: () => 0 });
+    const progress = Array.from({ length: 6 }, () => limiter.allow("1.1.1.1", "vsl_progress"));
+    expect(progress).toEqual([true, true, true, true, true, false]);
+    expect([limiter.allow("1.1.1.1", "checkout_click"), limiter.allow("1.1.1.1", "lead"), limiter.allow("1.1.1.1", "lead")]).toEqual([true, true, false]);
+  });
+
+  it("tipo desconhecido usa a cota geral", () => {
+    const limiter = createTrackLimiter({ eventsPerMinute: 1, progressPerMinute: 10, now: () => 0 });
+    expect([limiter.allow("ip", undefined), limiter.allow("ip", "step_view")]).toEqual([true, false]);
   });
 });

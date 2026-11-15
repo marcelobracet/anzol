@@ -25,3 +25,15 @@ export function createRateLimiter({ limit, windowMs, now = Date.now, maxKeys = 1
     size: () => windows.size,
   };
 }
+
+type TrackLimiterOptions = { eventsPerMinute: number; progressPerMinute: number; now?: () => number };
+
+// Duas cotas por IP: o progresso do vídeo (vários eventos por minuto por pessoa) não pode gastar a cota de
+// lead/checkout, e precisa de folga para muita gente atrás do mesmo IP (CGNAT de operadora móvel).
+export function createTrackLimiter({ eventsPerMinute, progressPerMinute, now }: TrackLimiterOptions) {
+  const events = createRateLimiter({ limit: eventsPerMinute, windowMs: 60_000, now });
+  const progress = createRateLimiter({ limit: progressPerMinute, windowMs: 60_000, now });
+  return {
+    allow: (ip: string, type: string | undefined) => (type === "vsl_progress" ? progress : events).allow(ip),
+  };
+}

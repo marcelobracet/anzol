@@ -61,7 +61,7 @@ export function VslPlayer({ step, source, locale, resumeAt, onWatched, onMilesto
   };
 
   const reportMilestone = (seconds: number) => {
-    const milestone = nextMilestone(lastMilestone.current, seconds);
+    const milestone = nextMilestone(lastMilestone.current, seconds, [step.cta.showAt]);
     if (milestone === null) return;
     lastMilestone.current = milestone;
     onMilestone?.(milestone);

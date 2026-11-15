@@ -52,4 +52,16 @@ describe("buildRetention", () => {
   it("taxa de play não passa de 100% mesmo se views vier menor", () => {
     expect(buildRetention(rows, { views: 10, ctaAt: 150 }).playRate).toBe(1);
   });
+
+  it("quem gravou o segundo do CTA conta como chegou ao botão, e o CTA aparece na curva", () => {
+    const r = buildRetention(
+      [
+        { maxSecond: 480, sessions: 1 }, // saiu antes do botão
+        { maxSecond: 490, sessions: 1 }, // viu o botão e saiu (ex.: clicou)
+      ],
+      { views: 2, ctaAt: 490 },
+    );
+    expect(r.reachedCta).toBe(0.5);
+    expect(r.points.at(-1)).toEqual({ second: 490, sessions: 1, share: 0.5 });
+  });
 });
