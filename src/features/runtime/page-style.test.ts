@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { DEFAULT_THEME, Theme } from "@/features/quiz/document/schema";
 import { VslStep } from "@/features/steps/vsl/schema";
-import { backgroundStyle, bannerStyle, pauseOverlayStyle, unmuteButtonStyle } from "./page-style";
+import { backgroundStyle, bannerStyle, pauseOverlayStyle, stepBackgroundStyle, unmuteButtonStyle } from "./page-style";
 
 const vsl = (extra: object = {}) =>
   VslStep.parse({ type: "vsl", id: "vsl1", name: "VSL", cta: { label: "Comprar", showAt: 60, offerId: "offer1" }, ...extra });
@@ -105,5 +105,18 @@ describe("unmuteButtonStyle", () => {
   });
   it("pill sem cor: primária do tema", () => {
     expect(unmuteButtonStyle({ ...base, variant: "pill" }).background).toBe("var(--q-primary)");
+  });
+});
+
+describe("stepBackgroundStyle", () => {
+  const vsl = (pageBackground?: string) =>
+    VslStep.parse({ id: "vsl_main", name: "VSL", type: "vsl", cta: { label: "Comprar", offerId: "offer_main", showAt: 600 }, pageBackground });
+
+  it("sem fundo próprio não muda nada", () => {
+    expect(stepBackgroundStyle(vsl())).toEqual({});
+  });
+
+  it("fundo escuro troca fundo e texto da tela", () => {
+    expect(stepBackgroundStyle(vsl("#12140F"))).toMatchObject({ "--q-bg": "#12140F", "--q-text": "#FFFFFF", color: "#FFFFFF", backgroundImage: "none" });
   });
 });

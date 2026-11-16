@@ -2,13 +2,15 @@ import { Fragment } from "react";
 import { interpolate, type InterpolationContext } from "../interpolate";
 import { parseRichText, type Inline } from "../rich-text";
 
-function InlineNode({ node }: { node: Inline }) {
+// accent: ==trecho== vira texto na cor de destaque (títulos), em vez do marca-texto.
+function InlineNode({ node, accent = false }: { node: Inline; accent?: boolean }) {
   switch (node.type) {
     case "strong":
       return <strong className="font-semibold">{node.text}</strong>;
     case "em":
       return <em>{node.text}</em>;
     case "mark":
+      if (accent) return <span className="text-[var(--q-accent)]">{node.text}</span>;
       return <mark className="rounded bg-[var(--q-accent)]/25 px-1 text-inherit">{node.text}</mark>;
     default:
       return <>{node.text}</>;
@@ -32,5 +34,22 @@ export function RichText({ text, ctx, className }: { text: string; ctx: Interpol
         </p>
       ))}
     </div>
+  );
+}
+
+// Uma linha só (títulos, subtítulos): sem <p>, quebras viram <br />.
+export function InlineText({ text, ctx, accent = false }: { text: string; ctx: InterpolationContext; accent?: boolean }) {
+  const lines = parseRichText(interpolate(text, ctx)).flat();
+  return (
+    <>
+      {lines.map((line, l) => (
+        <Fragment key={l}>
+          {l > 0 && <br />}
+          {line.map((node, n) => (
+            <InlineNode key={n} node={node} accent={accent} />
+          ))}
+        </Fragment>
+      ))}
+    </>
   );
 }

@@ -23,6 +23,14 @@ describe("QuizDocument", () => {
     expect(vsl).toMatchObject({ progressBar: { enabled: true, k: 3 }, toast: { enabled: true, windowHours: 48 } });
   });
 
+  it("layout de data exige as caixas configuradas", () => {
+    const input = fullDocumentInput();
+    Object.assign(input.steps[0], { layout: "date" });
+    expect(messages(input)).toContain("Layout de data precisa das caixas configuradas e de escolha única");
+    Object.assign(input.steps[0], { date: { dayLabel: "Dia", monthLabel: "Mês", yearLabel: "Ano", yearFrom: 1940, yearTo: 2010 } });
+    expect(messages(input)).toEqual([]);
+  });
+
   it("rejeita ids de step duplicados", () => {
     const input = fullDocumentInput();
     input.steps[1].id = input.steps[0].id;

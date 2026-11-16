@@ -54,6 +54,7 @@ export const VslStep = StepBase.extend({
   video: VideoMedia.optional(), // sem vídeo, mostra um espaço reservado
   aspect: z.enum(["16:9", "9:16"]).default("16:9"),
   accentColor: Hex.optional(), // padrão: theme.colors.accent
+  pageBackground: Hex.optional(), // fundo próprio da página do vídeo (ex.: escuro); texto em contraste automático
   // Progresso exibido = 1 - (1 - x)^k, x = tempo assistido / duração.
   progressBar: z
     .object({ enabled: z.boolean().default(true), k: z.number().min(1).max(10).default(3) })
