@@ -31,6 +31,16 @@ describe("reduce", () => {
     expect(state).toEqual({ index: 2, answers: { q_goal: ["goal_time"] } });
   });
 
+  it("layout de data grava o mês sem avançar", () => {
+    const dated = steps.map((s) =>
+      s.id === "q_goal" && s.type === "question"
+        ? { ...s, layout: "date" as const, date: { dayLabel: "Dia", monthLabel: "Mês", yearLabel: "Ano", yearFrom: 1940, yearTo: 2010 } }
+        : s,
+    );
+    const state = reduce(at(1), { type: "select", stepId: "q_goal", optionId: "goal_time" }, dated, { allowBack: true });
+    expect(state).toEqual({ index: 1, answers: { q_goal: ["goal_time"] } });
+  });
+
   it("escolha única troca a resposta anterior", () => {
     const state = run(at(1, { q_goal: ["goal_time"] }), { type: "select", stepId: "q_goal", optionId: "goal_money" });
     expect(state.answers.q_goal).toEqual(["goal_money"]);

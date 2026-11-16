@@ -39,6 +39,7 @@ export function defaultStep(type: AddableStepType, offerId = ""): Step {
         type,
         name: "Pergunta",
         title: "Escreva a pergunta",
+        optionStyle: "card",
         selection: { mode: "single", autoAdvance: true },
         layout: "list",
         options: ["Opção A", "Opção B"].map((label) => ({ id: newId(), label, score: 0, tags: [] })),

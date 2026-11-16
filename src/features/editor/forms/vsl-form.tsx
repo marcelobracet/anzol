@@ -88,6 +88,7 @@ export function VslForm({ step, onChange, issues, offers, quizId, cloudName }: S
       <TextField label="Descrição abaixo da headline (opcional)" value={step.subheadline} onChange={(v) => set({ subheadline: v || undefined })} />
       <h3 className="text-sm font-semibold">Vídeo</h3>
       <SelectField label="Formato" value={step.aspect} options={ASPECTS} onChange={(aspect) => set({ aspect })} />
+      <OptionalColorField label="Fundo da página" value={step.pageBackground} fallback="fundo do tema" onChange={(pageBackground) => set({ pageBackground })} />
       <VideoField value={step.video} quizId={quizId} onChange={(video) => set({ video })} error={errorAt(issues, "video")} />
       {step.video && (
         <MediaField

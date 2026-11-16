@@ -1,5 +1,6 @@
 import type { CSSProperties } from "react";
 import type { PageBackground } from "@/features/quiz/document/schema";
+import type { Step } from "@/features/steps/schema";
 import type { BannerStyle, PauseScreen, UnmuteButton } from "@/features/steps/vsl/schema";
 import { readableOn } from "./theme";
 
@@ -45,6 +46,13 @@ export function backgroundStyle(bg: PageBackground | undefined, imageUrl?: strin
     backgroundSize: layers.map((l) => l.size).join(", "),
     backgroundPosition: "center",
   };
+}
+
+// Step com fundo próprio (VSL): troca as variáveis de fundo/texto só nesta tela, sem padrão nem imagem do tema.
+export function stepBackgroundStyle(step: Step): StyleWithVars {
+  if (step.type !== "vsl" || !step.pageBackground) return {};
+  const bg = step.pageBackground;
+  return { "--q-bg": bg, "--q-text": readableOn(bg), "--q-surface": `color-mix(in srgb, ${readableOn(bg)} 8%, ${bg})`, backgroundColor: bg, backgroundImage: "none", color: readableOn(bg) };
 }
 
 export function bannerStyle(style: BannerStyle): { background: string; color: string } {

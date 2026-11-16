@@ -38,7 +38,9 @@ function select(state: QuizState, steps: Step[], stepId: string, optionId: strin
   if (step.selection.mode === "single") {
     const answered = withAnswer(state, stepId, [optionId]);
     const isLast = state.index >= steps.length - 1;
-    return step.selection.autoAdvance && !isLast ? { ...answered, index: state.index + 1 } : answered;
+    // No layout de data o mês é só uma das 3 caixas: avança no botão.
+    const advance = step.selection.autoAdvance && step.layout !== "date";
+    return advance && !isLast ? { ...answered, index: state.index + 1 } : answered;
   }
 
   const current = state.answers[stepId] ?? [];

@@ -10,7 +10,7 @@ import { useTracker } from "@/features/tracking/client/use-tracker";
 import { t } from "../i18n";
 import { interpolate } from "../interpolate";
 import { initialState, playableSteps, progress, reduce, type QuizAction } from "../engine";
-import { backgroundStyle } from "../page-style";
+import { backgroundStyle, stepBackgroundStyle } from "../page-style";
 import { PageBanner } from "./page-banner";
 
 const BACKGROUND_WIDTH = 1600;
@@ -91,7 +91,7 @@ export function QuizPlayer({
   const backgroundImage = background?.image && cloudName ? imageUrl(cloudName, background.image.publicId, BACKGROUND_WIDTH) : undefined;
 
   return (
-    <div style={backgroundStyle(background, backgroundImage)} className={`flex w-full flex-col ${embedded ? "min-h-full" : "min-h-dvh"}`}>
+    <div style={{ ...backgroundStyle(background, backgroundImage), ...stepBackgroundStyle(step) }} className={`flex w-full flex-col ${embedded ? "min-h-full" : "min-h-dvh"}`}>
       {step.type === "vsl" && step.banner && (
         <PageBanner text={interpolate(step.banner, { steps, answers: state.answers, lead })} style={step.bannerStyle} cloudName={cloudName} />
       )}

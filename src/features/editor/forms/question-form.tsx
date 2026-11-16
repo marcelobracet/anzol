@@ -16,6 +16,11 @@ const MODES = [
 const LAYOUTS = [
   { value: "list", label: "Lista" },
   { value: "grid", label: "Grade (2 colunas)" },
+  { value: "date", label: "Data (dia, mês e ano)" },
+] as const;
+const OPTION_STYLES = [
+  { value: "card", label: "Cartão claro" },
+  { value: "filled", label: "Botão na cor primária" },
 ] as const;
 
 export function QuestionForm({ step, onChange, issues, cloudName }: StepFormProps<QuestionStep>) {
@@ -24,8 +29,15 @@ export function QuestionForm({ step, onChange, issues, cloudName }: StepFormProp
 
   return (
     <div className="grid gap-4">
-      <TextField label="Pergunta" value={step.title} onChange={(title) => set({ title })} error={errorAt(issues, "title")} />
-      <TextField label="Subtítulo" value={step.subtitle} onChange={(v) => set({ subtitle: v || undefined })} />
+      <TextField label="Selo (opcional)" hint="Ex.: TESTE GRATUITO. Bom para a primeira tela." value={step.badge} onChange={(v) => set({ badge: v || undefined })} />
+      <TextField label="Pergunta" hint="==trecho== fica na cor de destaque" value={step.title} onChange={(title) => set({ title })} error={errorAt(issues, "title")} />
+      <TextField label="Subtítulo" hint="**negrito** permitido" value={step.subtitle} onChange={(v) => set({ subtitle: v || undefined })} />
+      <MediaField label="Imagem acima das opções (opcional)" value={step.media} cloudName={cloudName} onChange={(media) => set({ media })} />
+      {step.media && (
+        <TextField label="Legenda da imagem" value={step.mediaCaption} onChange={(v) => set({ mediaCaption: v || undefined })} />
+      )}
+      <TextField label="Rótulo acima das opções" hint="Ex.: Você é:" value={step.prompt} onChange={(v) => set({ prompt: v || undefined })} />
+      <TextField label="Rodapé" hint="Ex.: ⏱ Leva menos de 2 minutos · 🔒 100% anônimo" value={step.footnote} onChange={(v) => set({ footnote: v || undefined })} />
       <SelectField
         label="Tipo de resposta"
         value={selection.mode}
@@ -54,7 +66,28 @@ export function QuestionForm({ step, onChange, issues, cloudName }: StepFormProp
           </div>
         </div>
       )}
-      <SelectField label="Layout" value={step.layout} options={LAYOUTS} onChange={(layout) => set({ layout })} />
+      <SelectField
+        label="Layout"
+        value={step.layout}
+        options={LAYOUTS}
+        onChange={(layout) =>
+          set(
+            layout === "date"
+              ? {
+                  layout,
+                  selection: { mode: "single", autoAdvance: false },
+                  date: step.date ?? { dayLabel: "Dia", monthLabel: "Mês", yearLabel: "Ano", yearFrom: 1940, yearTo: new Date().getFullYear() - 18 },
+                }
+              : { layout },
+          )
+        }
+      />
+      {step.layout === "date" && step.date ? (
+        <DateForm date={step.date} onChange={(date) => set({ date })} />
+      ) : (
+        <SelectField label="Estilo das opções" value={step.optionStyle} options={OPTION_STYLES} onChange={(optionStyle) => set({ optionStyle })} />
+      )}
+      {step.layout === "date" && <p className="text-xs opacity-70">As opções abaixo são os meses: só o mês vira resposta (tags e pontos).</p>}
       <h3 className="text-sm font-semibold">Opções</h3>
       <ItemList<Option>
         items={step.options}
@@ -88,6 +121,22 @@ export function QuestionForm({ step, onChange, issues, cloudName }: StepFormProp
           </>
         )}
       />
+    </div>
+  );
+}
+
+type DateValue = NonNullable<QuestionStep["date"]>;
+
+function DateForm({ date, onChange }: { date: DateValue; onChange: (d: DateValue) => void }) {
+  const set = (patch: Partial<DateValue>) => onChange({ ...date, ...patch });
+  return (
+    <div className="grid grid-cols-3 gap-2">
+      <TextField label="Rótulo dia" value={date.dayLabel} onChange={(dayLabel) => set({ dayLabel })} />
+      <TextField label="Rótulo mês" value={date.monthLabel} onChange={(monthLabel) => set({ monthLabel })} />
+      <TextField label="Rótulo ano" value={date.yearLabel} onChange={(yearLabel) => set({ yearLabel })} />
+      <NumberField label="Ano de" value={date.yearFrom} onChange={(v) => set({ yearFrom: v ?? date.yearFrom })} />
+      <NumberField label="Ano até" value={date.yearTo} onChange={(v) => set({ yearTo: v ?? date.yearTo })} />
+      <TextField label="Texto vazio" value={date.placeholder} onChange={(v) => set({ placeholder: v || undefined })} />
     </div>
   );
 }
