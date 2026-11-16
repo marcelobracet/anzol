@@ -6,7 +6,7 @@ import { isEuLocale } from "../consent";
 import { META_EVENT, type TrackType } from "../event-types";
 import type { LeadErrors } from "../lead";
 import { loadPixel, pixelTrack } from "./pixel";
-import { fbcFromClick, initialConsent, pixelAllowed, readCookie, readUtm, type ConsentState } from "./utils";
+import { fbcFromClick, initialConsent, pixelAllowed, readCookie, readUtm, retentionKey, type ConsentState } from "./utils";
 
 export type TrackExtra = { videoSecond?: number; lead?: { name?: string; email?: string; phone?: string; consented: boolean } };
 export type TrackOutcome = { ok: true } | { ok: false; fieldErrors?: LeadErrors };
@@ -18,6 +18,7 @@ const CONSENT_KEY = "anzol:consent";
 // Espera a checagem de geo antes do primeiro evento (fbc/fbp e Pixel dependem dela), sem travar o quiz.
 const READY_TIMEOUT_MS = 2000;
 const SESSION_KEY = "anzol:sid";
+const VIEWER_KEY = "anzol:viewer";
 const UTM_KEY = "anzol:utm";
 
 function storage(kind: "local" | "session") {
@@ -35,6 +36,21 @@ function sessionId(): string {
   const id = crypto.randomUUID().replace(/-/g, "");
   store?.setItem(SESSION_KEY, id);
   return id;
+}
+
+// Id do navegador, para a retenção do vídeo (mesmo alcance do tempo assistido salvo no localStorage).
+function viewerId(): string | null {
+  const store = storage("local");
+  if (!store) return null;
+  try {
+    const existing = store.getItem(VIEWER_KEY);
+    if (existing) return existing;
+    const id = crypto.randomUUID().replace(/-/g, "");
+    store.setItem(VIEWER_KEY, id);
+    return id;
+  } catch {
+    return null; // storage cheio ou bloqueado: cai no id da aba
+  }
 }
 
 // UTMs do primeiro acesso da sessão (a URL pode perder os parâmetros depois).
@@ -100,7 +116,7 @@ export function useTracker({ enabled, locale, slug, pixelId }: Options) {
       const body = {
         eventId,
         type,
-        sessionId: sessionId(),
+        sessionId: retentionKey(type, { session: sessionId(), viewer: type === "vsl_progress" ? viewerId() : null }),
         slug,
         stepId,
         videoSecond: extra?.videoSecond,
