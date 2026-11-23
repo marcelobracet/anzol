@@ -5,6 +5,7 @@ import type { PublishedQuiz } from "@/features/runtime/published-source";
 import { createTrackService, type TrackDeps } from "./track-service";
 
 const QUIZ_ID = "6f1c2a3e-1111-4222-8333-944455556666";
+const QUESTION_ID = "q_age";
 const doc = QuizDocument.parse({
   schemaVersion: 1,
   theme: { colors: { primary: "#000000", background: "#FFFFFF", surface: "#EEEEEE", text: "#111111", accent: "#FF9900" }, font: "inter", radius: 8 },
@@ -160,5 +161,34 @@ describe("vsl_progress (retenção do vídeo)", () => {
   it("outros eventos guardam videoSecond nulo mesmo se o cliente mandar", async () => {
     await createTrackService(deps).track(request(body({ type: "step_view", stepId: "vsl_1", videoSecond: 30 })));
     expect(deps.events[0]).toMatchObject({ type: "step_view", videoSecond: null });
+  });
+});
+
+describe("answer (respostas do quiz)", () => {
+  const fullQuiz = (): PublishedQuiz => ({ ...quiz(), document: QuizDocument.parse(fullDocumentInput()) });
+  const answer = (over: Record<string, unknown> = {}) => body({ type: "answer", stepId: QUESTION_ID, optionIds: ["opt_30"], ...over });
+
+  beforeEach(() => {
+    deps.loadQuiz = vi.fn().mockResolvedValue(fullQuiz());
+  });
+
+  it("grava as opções escolhidas e não vai para a Meta", async () => {
+    const result = await createTrackService(deps).track(request(answer({ optionIds: ["opt_30", "opt_30"] })));
+    expect(result).toEqual({ success: true, data: { stored: true, capi: "skipped" } });
+    expect(deps.events[0]).toMatchObject({ type: "answer", stepId: QUESTION_ID, optionIds: ["opt_30"] });
+    expect(deps.capi).not.toHaveBeenCalled();
+  });
+
+  it("recusa opção que não existe, sem opções ou fora de uma pergunta", async () => {
+    const service = createTrackService(deps);
+    expect(await service.track(request(answer({ optionIds: ["opt_99"] })))).toMatchObject({ success: false, status: 400 });
+    expect(await service.track(request(answer({ optionIds: undefined })))).toMatchObject({ success: false, status: 400 });
+    expect(await service.track(request(answer({ stepId: "info_1" })))).toMatchObject({ success: false, status: 400 });
+    expect(deps.events).toHaveLength(0);
+  });
+
+  it("outros eventos não guardam opções", async () => {
+    await createTrackService(deps).track(request(body({ type: "step_view", stepId: QUESTION_ID, optionIds: ["opt_30"] })));
+    expect(deps.events[0]).toMatchObject({ type: "step_view", optionIds: null });
   });
 });

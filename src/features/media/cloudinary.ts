@@ -20,3 +20,9 @@ export function animatedUrl(cloudName: string, publicId: string, width: number):
   assertParams(cloudName, width);
   return `${BASE}/${cloudName}/image/upload/q_auto,c_limit,w_${width}/${encodePublicId(publicId)}.mp4`;
 }
+
+// Áudio enviado como resource_type "video"; o ".mp3" faz o Cloudinary converter e servir em mp3 (toca em todo navegador).
+export function audioUrl(cloudName: string, publicId: string): string {
+  assertParams(cloudName, 1);
+  return `${BASE}/${cloudName}/video/upload/${encodePublicId(publicId)}.mp3`;
+}

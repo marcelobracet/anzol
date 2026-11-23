@@ -4,10 +4,12 @@ import { connection } from "next/server";
 import { z } from "zod";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { requireStudioUser } from "@/features/auth/require-studio-user";
+import { buildEngagement, type Engagement } from "@/features/dashboard/engagement";
 import { buildFunnel } from "@/features/dashboard/funnel";
 import { parseFunnelQuery } from "@/features/dashboard/query";
 import { RetentionCard } from "@/features/dashboard/components/retention-card";
 import { buildRetention } from "@/features/dashboard/retention";
+import { loadDepth } from "@/features/dashboard/responses";
 import { loadFunnelStats, loadRetentionStats } from "@/features/dashboard/stats";
 import { quizService } from "@/features/quiz/server";
 import { playableSteps } from "@/features/runtime/engine";
@@ -45,8 +47,19 @@ export default async function FunnelPage({ params, searchParams }: PageProps<"/s
   }
 
   const filter = { versionId: query.scope === "current" ? version.id : null, from: query.from, to: query.to };
-  const [stats, retentionStats] = await Promise.all([loadFunnelStats(quiz.id, filter), loadRetentionStats(quiz.id, filter)]);
   const steps = playableSteps(version.document);
+  const [stats, retentionStats, engagement] = await Promise.all([
+    loadFunnelStats(quiz.id, filter),
+    loadRetentionStats(quiz.id, filter),
+    // Sem a migração 0006 o resto do painel continua funcionando.
+    loadDepth(quiz.id, filter).then(
+      (depth): Engagement | null => buildEngagement(depth, steps.length),
+      (error: unknown) => {
+        console.error("[funnel] engajamento indisponível", String(error));
+        return null;
+      },
+    ),
+  ]);
   const funnel = buildFunnel(steps, stats.counts, stats.purchases);
   const vslViews = (stepId: string) => stats.counts.filter((c) => c.type === "vsl_view" && c.stepId === stepId).reduce((sum, c) => sum + c.sessions, 0);
   const retentions = steps.flatMap((s) =>
@@ -60,7 +73,7 @@ export default async function FunnelPage({ params, searchParams }: PageProps<"/s
 
   const summary = [
     ["Visitantes", funnel.summary.visitors.toLocaleString("pt-BR")],
-    ["Leads", funnel.summary.leads.toLocaleString("pt-BR")],
+    ["Leads (formulário)", funnel.summary.leads.toLocaleString("pt-BR")],
     ["Cliques no checkout", funnel.summary.checkouts.toLocaleString("pt-BR")],
     ["Compras", funnel.summary.purchases.toLocaleString("pt-BR")],
     ["Conversão", pct(funnel.summary.conversion)],
@@ -77,6 +90,33 @@ export default async function FunnelPage({ params, searchParams }: PageProps<"/s
         <Link href={link({ scope: "current" })} className={chip(query.scope === "current")}>Versão {version.versionNumber}</Link>
         <Link href={link({ scope: "all" })} className={chip(query.scope === "all")}>Todas as versões</Link>
       </div>
+
+      {engagement ? (
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+          {[
+            ["Visitantes", engagement.visitors.toLocaleString("pt-BR"), "Acessaram o funil"],
+            ["Leads adquiridos", engagement.interacted.toLocaleString("pt-BR"), "Iniciaram alguma interação com o funil"],
+            ["Taxa de interação", pct(engagement.interactionRate), "Visitantes que interagiram com o funil"],
+            ["Leads qualificados", engagement.qualified.toLocaleString("pt-BR"), `+50% das etapas · ${pct(engagement.qualifiedRate)} dos visitantes`],
+          ].map(([label, value, hint]) => (
+            <Card key={label} size="sm">
+              <CardContent>
+                <p className="text-[11px] font-semibold tracking-wide text-muted-foreground uppercase">{label}</p>
+                <p className="text-3xl font-semibold tabular-nums">{value}</p>
+                <p className="text-xs text-muted-foreground">{hint}</p>
+              </CardContent>
+            </Card>
+          ))}
+          <p className="col-span-full text-xs text-muted-foreground">
+            Fluxos completos (chegaram à última etapa): {engagement.completed.toLocaleString("pt-BR")} · {pct(engagement.completedRate)}.{" "}
+            <Link href={`/quizzes/${quiz.id}/responses${link({})}`} className="underline">Ver respostas das pessoas →</Link>
+          </p>
+        </div>
+      ) : (
+        <p className="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900 dark:bg-amber-950 dark:text-amber-200">
+          Indicadores de interação indisponíveis: aplique a migração <code>0006_answers_engagement.sql</code> no Supabase.
+        </p>
+      )}
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
         {summary.map(([label, value]) => (

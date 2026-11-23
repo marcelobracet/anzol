@@ -44,6 +44,32 @@ export type VideoMedia = z.infer<typeof VideoMedia>;
 
 export const Media = z.union([ImageMedia, AnimatedMedia, FileVideo, BunnyVideo]);
 
+// Áudio no Cloudinary (resource_type "video"); entregue como mp3.
+export const AudioMedia = z.object({
+  kind: z.literal("audio"),
+  publicId: z.string().min(1),
+  durationSec: z.number().positive().max(600),
+});
+export type AudioMedia = z.infer<typeof AudioMedia>;
+
+// Áudio no estilo do WhatsApp, embutido em steps (info, resultado).
+// Ambiente: "room" é um ruído de sala gerado no navegador; "file" toca um áudio de fundo em loop (ex.: pessoas conversando).
+export const VoiceNote = z.object({
+  // Rascunho pode nascer sem áudio; a página só mostra o balão quando houver.
+  audio: AudioMedia.optional(),
+  senderName: Text.min(1).max(60),
+  senderColor: Hex.default("#1f9d55"),
+  avatar: ImageMedia.optional(),
+  ambience: z
+    .object({
+      kind: z.enum(["none", "room", "file"]).default("none"),
+      volume: z.number().int().min(0).max(100).default(20),
+      file: AudioMedia.optional(),
+    })
+    .default({ kind: "none", volume: 20 }),
+});
+export type VoiceNote = z.infer<typeof VoiceNote>;
+
 export const StepBase = z.object({
   id: Id,
   name: z.string().min(1).max(80), // rótulo interno no Studio e no funil

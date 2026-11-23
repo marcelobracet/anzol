@@ -14,6 +14,7 @@ export type StoredEvent = {
   stepId: string | null;
   type: TrackRequest["type"];
   videoSecond: number | null; // só em vsl_progress
+  optionIds: string[] | null; // só em answer
   utm: TrackRequest["utm"];
 };
 export type StoredLead = {
@@ -97,6 +98,12 @@ export function createTrackService(deps: TrackDeps) {
         if (request.videoSecond === undefined || !isMilestone(request.videoSecond)) return invalid("Segundo do vídeo inválido");
       }
 
+      if (request.type === "answer") {
+        if (step?.type !== "question") return invalid("Resposta fora de uma pergunta");
+        const valid = new Set(step.options.map((o) => o.id));
+        if (!request.optionIds?.length || !request.optionIds.every((id) => valid.has(id))) return invalid("Opção inválida");
+      }
+
       let lead: NormalizedLead | undefined;
       if (request.type === "lead") {
         if (step?.type !== "leadForm") return invalid("Lead fora de um formulário");
@@ -113,6 +120,7 @@ export function createTrackService(deps: TrackDeps) {
         stepId: request.stepId ?? null,
         type: request.type,
         videoSecond: request.type === "vsl_progress" ? (request.videoSecond ?? null) : null,
+        optionIds: request.type === "answer" ? [...new Set(request.optionIds)] : null,
         utm: request.utm,
       });
       if (!stored) return { success: true, data: { stored: false, capi: "skipped" } };
