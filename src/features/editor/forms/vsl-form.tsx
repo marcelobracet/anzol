@@ -57,7 +57,8 @@ const UNMUTE_ANIMATIONS: { value: UnmuteButton["animation"]; label: string }[] =
 
 export function VslForm({ step, onChange, issues, offers, quizId, cloudName }: StepFormProps<VslStep>) {
   const set = (patch: Partial<VslStep>) => onChange({ ...step, ...patch });
-  const { cta, toast, progressBar, bannerStyle, pauseScreen, unmuteButton } = step;
+  const { cta, toast, progressBar, bannerStyle, pauseScreen, unmuteButton, liveViewers } = step;
+  const setViewers = (patch: Partial<typeof liveViewers>) => set({ liveViewers: { ...liveViewers, ...patch } });
   const setBanner = (patch: Partial<BannerStyle>) => set({ bannerStyle: { ...bannerStyle, ...patch } });
   const setPause = (patch: Partial<PauseScreen>) => set({ pauseScreen: { ...pauseScreen, ...patch } });
   const setUnmute = (patch: Partial<UnmuteButton>) => set({ unmuteButton: { ...unmuteButton, ...patch } });
@@ -170,6 +171,19 @@ export function VslForm({ step, onChange, issues, offers, quizId, cloudName }: S
         </div>
       )}
       <p className="text-xs text-muted-foreground">O toast usa só compras aprovadas registradas pelo webhook. Sem compras, não aparece.</p>
+      <h3 className="text-sm font-semibold">Pessoas assistindo</h3>
+      <CheckboxField label="Mostrar quantas pessoas estão assistindo" checked={liveViewers.enabled} onChange={(enabled) => setViewers({ enabled })} />
+      {liveViewers.enabled && (
+        <>
+          <div className="grid grid-cols-2 gap-2">
+            <NumberField label="Número base" min={1} max={100000} value={liveViewers.base} onChange={(v) => setViewers({ base: Math.max(1, v ?? 1) })} error={errorAt(issues, "liveViewers", "base")} />
+            <NumberField label="Varia até (±)" min={0} max={10000} value={liveViewers.spread} onChange={(v) => setViewers({ spread: Math.max(0, v ?? 0) })} error={errorAt(issues, "liveViewers", "spread")} />
+          </div>
+          <p className="text-xs text-muted-foreground">
+            O número muda aos poucos a cada poucos segundos, entre {Math.max(1, liveViewers.base - liveViewers.spread)} e {liveViewers.base + liveViewers.spread}.
+          </p>
+        </>
+      )}
     </div>
   );
 }

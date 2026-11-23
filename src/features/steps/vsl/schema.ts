@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { LiveViewers } from "./live-viewers";
 import { Hex, Id, ImageMedia, StepBase, Text, VideoMedia } from "../shared/primitives";
 
 export const BANNER_ICONS = ["none", "compass", "clock", "alert", "flame", "play", "gift", "star", "heart", "bell"] as const;
@@ -68,6 +69,7 @@ export const VslStep = StepBase.extend({
       windowHours: z.number().int().min(1).max(168).default(48),
     })
     .default({ enabled: true, leadSeconds: 30, windowHours: 48 }),
+  liveViewers: LiveViewers.default({ enabled: false, base: 120, spread: 15 }), // "N assistindo agora"
 }).refine((s) => !s.toast.enabled || s.toast.leadSeconds <= s.cta.showAt, {
   message: "toast.leadSeconds não pode ser maior que cta.showAt",
   path: ["toast", "leadSeconds"],

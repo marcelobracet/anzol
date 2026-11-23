@@ -7,6 +7,7 @@ import { t } from "@/features/runtime/i18n";
 import { interpolate } from "@/features/runtime/interpolate";
 import type { StepViewProps } from "../step-view-props";
 import { formatDuration } from "./duration";
+import { LiveViewersBadge } from "./live-viewers-badge";
 import { ctaVisible, toastWindowOpen } from "./progress";
 import { PurchaseToast } from "./purchase-toast";
 import type { VslStep } from "./schema";
@@ -30,6 +31,11 @@ export function VslView({ step, ctx, runtime, cloudName }: StepViewProps<VslStep
 
   return (
     <>
+      {step.liveViewers.enabled && (
+        <div className={step.headline || step.subheadline ? "mb-4" : "mb-3"}>
+          <LiveViewersBadge config={step.liveViewers} locale={runtime.locale} />
+        </div>
+      )}
       {step.headline && (
         <h1 className="text-center text-2xl leading-tight font-extrabold text-balance sm:text-3xl md:text-4xl">{interpolate(step.headline, ctx)}</h1>
       )}

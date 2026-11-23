@@ -92,6 +92,7 @@ export function defaultStep(type: AddableStepType, offerId = ""): Step {
         progressBar: { enabled: true, k: 3 },
         cta: { label: "Quero garantir minha vaga", showAt: 0, offerId },
         toast: { enabled: false, leadSeconds: 0, windowHours: 48 },
+        liveViewers: { enabled: false, base: 120, spread: 15 },
       };
     case "offerTimer":
       return {
