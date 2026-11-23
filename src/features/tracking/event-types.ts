@@ -4,8 +4,9 @@ import { Id } from "@/features/steps/shared/primitives";
 import { MAX_VIDEO_SECOND } from "@/features/steps/vsl/milestones";
 import type { MetaEventName } from "./capi";
 
-// vsl_progress: marco de tempo assistido do vídeo (retenção). Fica só no painel interno.
-export const TRACK_TYPES = ["quiz_start", "step_view", "vsl_view", "vsl_progress", "lead", "checkout_click"] as const;
+// vsl_progress: marco de tempo assistido do vídeo (retenção). answer: opções escolhidas numa pergunta.
+// Os dois ficam só no painel interno.
+export const TRACK_TYPES = ["quiz_start", "step_view", "vsl_view", "vsl_progress", "answer", "lead", "checkout_click"] as const;
 export type TrackType = (typeof TRACK_TYPES)[number];
 
 // Só estes vão para a Meta; step_view fica no funil interno.
@@ -23,6 +24,7 @@ export const TrackRequest = z.object({
   slug: z.string().regex(/^[a-z0-9]+(-[a-z0-9]+)*$/).max(60).nullable(),
   stepId: Id.optional(),
   videoSecond: z.number().int().min(0).max(MAX_VIDEO_SECOND).optional(),
+  optionIds: z.array(Id).min(1).max(20).optional(),
   pageUrl: z.url({ protocol: /^https?$/ }).max(2000),
   utm: z.partialRecord(z.enum(TRACKING_PARAMS), z.string().max(200)).default({}),
   consent: z.enum(["granted", "denied", "unset"]),

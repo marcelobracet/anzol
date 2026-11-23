@@ -16,6 +16,8 @@ export function createSupabaseTrackingRepository(db: SupabaseClient): TrackingRe
         type: event.type,
         video_second: event.videoSecond,
         utm: event.utm,
+        // Só no evento answer: os demais continuam gravando mesmo antes da migração 0006.
+        ...(event.optionIds ? { option_ids: event.optionIds } : {}),
       });
       if (error?.code === UNIQUE_VIOLATION) return false; // retry do mesmo event_id
       if (error) throw new Error(`Supabase events: ${error.message}`);

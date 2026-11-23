@@ -59,6 +59,12 @@ export function QuizPlayer({
   const started = useRef(false);
   useEffect(() => {
     if (!current || trackedIndex.current === state.index) return;
+    // Avançou: registra a resposta da pergunta que ficou para trás (a última vale se a pessoa voltar e mudar).
+    const previous = trackedIndex.current === null ? undefined : steps[trackedIndex.current];
+    if (previous?.type === "question" && trackedIndex.current! < state.index) {
+      const optionIds = state.answers[previous.id];
+      if (optionIds?.length) void track("answer", previous.id, { optionIds });
+    }
     trackedIndex.current = state.index;
     if (!started.current && state.index === 0) {
       started.current = true;
@@ -66,7 +72,7 @@ export function QuizPlayer({
     }
     void track("step_view", current.id);
     if (current.type === "vsl") void track("vsl_view", current.id);
-  }, [state.index, current, track]);
+  }, [state.index, state.answers, current, track, steps]);
 
   useEffect(() => {
     if (firstRender.current) {

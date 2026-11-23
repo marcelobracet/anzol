@@ -1,6 +1,6 @@
 "use client";
 
-import { BarChart3, Eye, History, ListOrdered, Paintbrush, Pencil, Settings, ShoppingCart } from "lucide-react";
+import { BarChart3, Eye, History, ListOrdered, MessageSquareText, Paintbrush, Pencil, Settings, ShoppingCart } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { Badge } from "@/components/ui/badge";
@@ -108,6 +108,9 @@ export function QuizEditor({ quiz, liveUrl, cloudName, bunnyHost }: Props) {
           </Link>
           <Link href={`/quizzes/${quiz.id}/funnel`} className={navLink} title="Funil e retenção">
             <BarChart3 className="size-4" /> <span className="hidden sm:inline">Funil</span>
+          </Link>
+          <Link href={`/quizzes/${quiz.id}/responses`} className={navLink} title="Respostas das pessoas">
+            <MessageSquareText className="size-4" /> <span className="hidden sm:inline">Respostas</span>
           </Link>
           <Link href={`/quizzes/${quiz.id}/settings`} className={navLink} title="Configurações">
             <Settings className="size-4" /> <span className="hidden sm:inline">Configurações</span>
