@@ -1,4 +1,5 @@
 import { MediaView } from "@/features/media/components/media-view";
+import { VoiceNoteView } from "@/features/media/voice-note/voice-note-view";
 import { StickyCta } from "@/features/runtime/components/quiz-button";
 import { RichText } from "@/features/runtime/components/rich-text";
 import { interpolate } from "@/features/runtime/interpolate";
@@ -12,6 +13,7 @@ export function ResultView({ step, ctx, dispatch, cloudName, isLast }: StepViewP
     <>
       {content.media && <MediaView media={content.media} cloudName={cloudName} priority />}
       <h1 className="mt-6 text-3xl leading-tight font-bold text-balance">{interpolate(content.title, ctx)}</h1>
+      {step.voiceNote && <VoiceNoteView note={step.voiceNote} cloudName={cloudName} />}
       {content.body && <RichText text={content.body} ctx={ctx} className="mt-3 text-base leading-relaxed opacity-90" />}
       {!isLast && <StickyCta onClick={() => dispatch({ type: "next" })}>{interpolate(step.ctaLabel, ctx)}</StickyCta>}
     </>

@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { requireStudioUser } from "@/features/auth/require-studio-user";
 import { signVideoUpload, type SignedVideoUpload } from "@/features/media/r2";
-import { signUpload, type SignedUpload } from "@/features/media/sign-upload";
+import { signAudioUpload, signUpload, type SignedUpload } from "@/features/media/sign-upload";
 import { newId } from "@/features/steps/shared/primitives";
 import { quizService } from "@/features/quiz/server";
 import type { Result } from "@/features/quiz/types";
@@ -32,6 +32,17 @@ export async function signUploadAction(): Promise<Result<SignedUpload>> {
     const env = cloudinaryUploadEnv();
     const credentials = { cloudName: env.CLOUDINARY_CLOUD_NAME, apiKey: env.CLOUDINARY_API_KEY, apiSecret: env.CLOUDINARY_API_SECRET };
     return { success: true, data: signUpload(credentials, Math.floor(Date.now() / 1000)) };
+  } catch {
+    return { success: false, error: "Upload não configurado (variáveis CLOUDINARY_*)" };
+  }
+}
+
+export async function signAudioUploadAction(): Promise<Result<SignedUpload>> {
+  await requireStudioUser();
+  try {
+    const env = cloudinaryUploadEnv();
+    const credentials = { cloudName: env.CLOUDINARY_CLOUD_NAME, apiKey: env.CLOUDINARY_API_KEY, apiSecret: env.CLOUDINARY_API_SECRET };
+    return { success: true, data: signAudioUpload(credentials, Math.floor(Date.now() / 1000)) };
   } catch {
     return { success: false, error: "Upload não configurado (variáveis CLOUDINARY_*)" };
   }

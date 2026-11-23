@@ -4,6 +4,7 @@ import type { ResultStep } from "@/features/steps/result/schema";
 import { newId } from "@/features/steps/shared/primitives";
 import { ItemList, NumberField, SelectField, TextField } from "../components/fields";
 import { MediaField } from "../components/media-field";
+import { VoiceNoteField } from "../components/voice-note-field";
 import { errorAt, type EditorIssue } from "../document-ops";
 import type { StepFormProps } from "./form-props";
 import { RICH_TEXT_HINT } from "./info-form";
@@ -78,6 +79,7 @@ export function ResultForm({ step, onChange, issues, cloudName }: StepFormProps<
       />
       <h3 className="text-sm font-semibold">Resultado padrão</h3>
       <ContentFields value={step.fallback} onChange={(fallback) => set({ fallback })} issues={issues} prefix={["fallback"]} cloudName={cloudName} />
+      <VoiceNoteField value={step.voiceNote} cloudName={cloudName} onChange={(voiceNote) => set({ voiceNote })} />
       <TextField label="Texto do botão" value={step.ctaLabel} onChange={(ctaLabel) => set({ ctaLabel })} error={errorAt(issues, "ctaLabel")} />
     </div>
   );
