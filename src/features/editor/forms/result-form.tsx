@@ -58,7 +58,7 @@ function ConditionFields({ variant, update }: { variant: Variant; update: (v: Va
   );
 }
 
-export function ResultForm({ step, onChange, issues, cloudName }: StepFormProps<ResultStep>) {
+export function ResultForm({ step, onChange, issues, cloudName, quizId }: StepFormProps<ResultStep>) {
   const set = (patch: Partial<ResultStep>) => onChange({ ...step, ...patch });
   return (
     <div className="grid gap-4">
@@ -79,7 +79,7 @@ export function ResultForm({ step, onChange, issues, cloudName }: StepFormProps<
       />
       <h3 className="text-sm font-semibold">Resultado padrão</h3>
       <ContentFields value={step.fallback} onChange={(fallback) => set({ fallback })} issues={issues} prefix={["fallback"]} cloudName={cloudName} />
-      <VoiceNoteField value={step.voiceNote} cloudName={cloudName} onChange={(voiceNote) => set({ voiceNote })} />
+      <VoiceNoteField value={step.voiceNote} quizId={quizId} onChange={(voiceNote) => set({ voiceNote })} />
       <TextField label="Texto do botão" value={step.ctaLabel} onChange={(ctaLabel) => set({ ctaLabel })} error={errorAt(issues, "ctaLabel")} />
     </div>
   );

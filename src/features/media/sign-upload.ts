@@ -31,21 +31,3 @@ export function signUpload(credentials: CloudinaryCredentials, timestamp: number
     },
   };
 }
-
-const AUDIO_FOLDER = "anzol/audio";
-const AUDIO_FORMATS = "mp3,m4a,aac,ogg,oga,opus,wav,webm";
-
-// Áudio vai pelo endpoint de vídeo do Cloudinary (é assim que ele trata áudio).
-export function signAudioUpload(credentials: CloudinaryCredentials, timestamp: number): SignedUpload {
-  const params = { timestamp, folder: AUDIO_FOLDER, allowed_formats: AUDIO_FORMATS };
-  return {
-    uploadUrl: `https://api.cloudinary.com/v1_1/${credentials.cloudName}/video/upload`,
-    fields: {
-      api_key: credentials.apiKey,
-      timestamp: String(timestamp),
-      folder: AUDIO_FOLDER,
-      allowed_formats: AUDIO_FORMATS,
-      signature: cloudinarySignature(params, credentials.apiSecret),
-    },
-  };
-}

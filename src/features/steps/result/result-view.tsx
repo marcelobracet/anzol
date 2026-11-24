@@ -13,7 +13,7 @@ export function ResultView({ step, ctx, dispatch, cloudName, isLast }: StepViewP
     <>
       {content.media && <MediaView media={content.media} cloudName={cloudName} priority />}
       <h1 className="mt-6 text-3xl leading-tight font-bold text-balance">{interpolate(content.title, ctx)}</h1>
-      {step.voiceNote && <VoiceNoteView note={step.voiceNote} cloudName={cloudName} />}
+      {step.voiceNote && <VoiceNoteView note={step.voiceNote} />}
       {content.body && <RichText text={content.body} ctx={ctx} className="mt-3 text-base leading-relaxed opacity-90" />}
       {!isLast && <StickyCta onClick={() => dispatch({ type: "next" })}>{interpolate(step.ctaLabel, ctx)}</StickyCta>}
     </>

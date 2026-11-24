@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { presignUrl, r2ObjectKey, signVideoUpload, VIDEO_TYPES } from "./r2";
+import { presignUrl, r2ObjectKey, signMediaUpload, signVideoUpload, VIDEO_TYPES } from "./r2";
 
 describe("presignUrl (AWS SigV4 em query string)", () => {
   // Vetor oficial da AWS: "Authenticating Requests: Using Query Parameters".
@@ -52,5 +52,15 @@ describe("signVideoUpload", () => {
 
   it("aceita os formatos comuns de vídeo", () => {
     expect(VIDEO_TYPES).toEqual(expect.arrayContaining(["video/mp4", "video/quicktime", "video/webm"]));
+  });
+
+  it("áudio e imagem do balão vão para audio/ e img/, cada um só com os próprios tipos", () => {
+    const audio = signMediaUpload(env, { quizId: "q1", contentType: "audio/mpeg", id: "a", category: "audio" });
+    const image = signMediaUpload(env, { quizId: "q1", contentType: "image/webp", id: "b", category: "image" });
+    if (!audio.success || !image.success) throw new Error("deveria assinar");
+    expect(audio.data.publicUrl).toBe("https://media.exemplo.com/audio/q1/a.mp3");
+    expect(image.data.publicUrl).toBe("https://media.exemplo.com/img/q1/b.webp");
+    expect(signMediaUpload(env, { quizId: "q1", contentType: "video/mp4", id: "c", category: "audio" }).success).toBe(false);
+    expect(signMediaUpload(env, { quizId: "q1", contentType: "image/svg+xml", id: "d", category: "image" }).success).toBe(false);
   });
 });

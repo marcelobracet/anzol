@@ -44,10 +44,10 @@ export type VideoMedia = z.infer<typeof VideoMedia>;
 
 export const Media = z.union([ImageMedia, AnimatedMedia, FileVideo, BunnyVideo]);
 
-// Áudio no Cloudinary (resource_type "video"); entregue como mp3.
+// Áudio no R2 (URL pública do bucket). A duração é lida no navegador antes do envio.
 export const AudioMedia = z.object({
   kind: z.literal("audio"),
-  publicId: z.string().min(1),
+  url: HttpsUrl,
   durationSec: z.number().positive().max(600),
 });
 export type AudioMedia = z.infer<typeof AudioMedia>;
@@ -59,7 +59,7 @@ export const VoiceNote = z.object({
   audio: AudioMedia.optional(),
   senderName: Text.min(1).max(60),
   senderColor: Hex.default("#1f9d55"),
-  avatar: ImageMedia.optional(),
+  avatarUrl: HttpsUrl.optional(), // foto redonda, no R2
   ambience: z
     .object({
       kind: z.enum(["none", "room", "file"]).default("none"),
