@@ -1,15 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { audioUrl } from "@/features/media/cloudinary";
-import { uploadedToAudio } from "@/features/media/upload-media";
+import { readAudioDuration } from "@/features/media/voice-note/audio-duration";
 import { formatDuration } from "@/features/media/voice-note/waveform";
 import type { AudioMedia, VoiceNote } from "@/features/steps/shared/primitives";
-import { signAudioUploadAction } from "../actions";
+import { signVoiceNoteUploadAction } from "../actions";
 import { ColorField, Field, NumberField, SelectField, TextField } from "./fields";
-import { MediaField } from "./media-field";
 
-const MAX_BYTES = 20 * 1024 * 1024;
+const MAX_AUDIO_BYTES = 20 * 1024 * 1024;
+const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 
 const AMBIENCES = [
   { value: "none", label: "Sem som de fundo" },
@@ -23,35 +22,37 @@ export const NEW_VOICE_NOTE: VoiceNote = {
   ambience: { kind: "room", volume: 20 },
 };
 
-async function uploadAudio(file: File): Promise<AudioMedia> {
-  const signed = await signAudioUploadAction();
+// Mesmo caminho do vídeo da VSL: URL assinada pelo servidor e PUT direto no R2 (independe da chave do Cloudinary).
+async function putToR2(quizId: string, category: "audio" | "image", file: File): Promise<string> {
+  const signed = await signVoiceNoteUploadAction(quizId, category, file.type);
   if (!signed.success) throw new Error(signed.error);
-  const body = new FormData();
-  for (const [key, value] of Object.entries(signed.data.fields)) body.append(key, value);
-  body.append("file", file);
-  const response = await fetch(signed.data.uploadUrl, { method: "POST", body });
-  const json = await response.json();
-  if (!response.ok) throw new Error(json?.error?.message ?? "Falha no upload");
-  return uploadedToAudio(json);
+  const response = await fetch(signed.data.uploadUrl, { method: "PUT", headers: { "Content-Type": file.type }, body: file });
+  if (!response.ok) throw new Error(`R2 recusou o envio (${response.status})`);
+  return signed.data.publicUrl;
 }
 
-function AudioUpload({ label, hint, value, cloudName, onChange }: {
+async function uploadAudio(quizId: string, file: File): Promise<AudioMedia> {
+  const durationSec = await readAudioDuration(file); // antes do envio: arquivo ilegível nem sobe
+  return { kind: "audio", url: await putToR2(quizId, "audio", file), durationSec };
+}
+
+function AudioUpload({ label, hint, value, quizId, onChange }: {
   label: string;
   hint?: string;
   value: AudioMedia | undefined;
-  cloudName?: string;
+  quizId?: string;
   onChange: (value: AudioMedia | undefined) => void;
 }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string>();
 
   async function onFile(file: File | undefined) {
-    if (!file) return;
-    if (file.size > MAX_BYTES) return setError("Arquivo acima de 20 MB");
+    if (!file || !quizId) return;
+    if (file.size > MAX_AUDIO_BYTES) return setError("Arquivo acima de 20 MB");
     setBusy(true);
     setError(undefined);
     try {
-      onChange(await uploadAudio(file));
+      onChange(await uploadAudio(quizId, file));
     } catch (e) {
       setError(e instanceof Error ? e.message : "Falha no upload");
     } finally {
@@ -64,16 +65,16 @@ function AudioUpload({ label, hint, value, cloudName, onChange }: {
       <Field label={label} error={error} hint={hint}>
         <input
           type="file"
-          accept="audio/*"
-          disabled={busy}
+          accept="audio/mpeg,audio/mp4,audio/x-m4a,audio/aac,audio/ogg,audio/wav,audio/webm"
+          disabled={busy || !quizId}
           className="text-xs file:mr-2 file:rounded file:border file:bg-background file:px-2 file:py-1"
           onChange={(e) => void onFile(e.target.files?.[0])}
         />
       </Field>
-      {busy && <p className="text-xs text-muted-foreground">Enviando para o Cloudinary…</p>}
-      {value && cloudName && (
+      {busy && <p className="text-xs text-muted-foreground">Enviando…</p>}
+      {value && (
         <div className="grid gap-1 rounded-md border p-2">
-          <audio controls preload="none" src={audioUrl(cloudName, value.publicId)} className="w-full" />
+          <audio controls preload="none" src={value.url} className="w-full" />
           <div className="flex items-center justify-between text-xs text-muted-foreground">
             <span>Duração: {formatDuration(value.durationSec)}</span>
             <button type="button" className="text-destructive" onClick={() => onChange(undefined)}>
@@ -86,11 +87,58 @@ function AudioUpload({ label, hint, value, cloudName, onChange }: {
   );
 }
 
+function AvatarUpload({ value, quizId, onChange }: {
+  value: string | undefined;
+  quizId?: string;
+  onChange: (value: string | undefined) => void;
+}) {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string>();
+
+  async function onFile(file: File | undefined) {
+    if (!file || !quizId) return;
+    if (file.size > MAX_IMAGE_BYTES) return setError("Imagem acima de 5 MB");
+    setBusy(true);
+    setError(undefined);
+    try {
+      onChange(await putToR2(quizId, "image", file));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Falha no upload");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Field label="Foto (avatar)" error={error} hint="Quadrada, até 5 MB. Aparece redonda ao lado do áudio.">
+      <div className="flex items-center gap-3">
+        {value && (
+          // eslint-disable-next-line @next/next/no-img-element -- prévia pequena no Studio
+          <img src={value} alt="" className="size-12 rounded-full object-cover" />
+        )}
+        <input
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          disabled={busy || !quizId}
+          className="text-xs file:mr-2 file:rounded file:border file:bg-background file:px-2 file:py-1"
+          onChange={(e) => void onFile(e.target.files?.[0])}
+        />
+        {busy && <span className="text-xs text-muted-foreground">Enviando…</span>}
+        {value && !busy && (
+          <button type="button" className="text-xs text-destructive" onClick={() => onChange(undefined)}>
+            Remover
+          </button>
+        )}
+      </div>
+    </Field>
+  );
+}
+
 /** Configura o áudio estilo WhatsApp de um step. `value` undefined = sem áudio. */
-export function VoiceNoteField({ value, onChange, cloudName }: {
+export function VoiceNoteField({ value, onChange, quizId }: {
   value: VoiceNote | undefined;
   onChange: (value: VoiceNote | undefined) => void;
-  cloudName?: string;
+  quizId?: string;
 }) {
   if (!value) {
     return (
@@ -116,9 +164,9 @@ export function VoiceNoteField({ value, onChange, cloudName }: {
       </div>
       <AudioUpload
         label="Áudio (mp3, m4a, ogg, wav)"
-        hint="Até 20 MB. Vai para o Cloudinary e é entregue em mp3."
+        hint="Até 20 MB e 10 minutos. MP3 é o mais compatível (o export padrão do ElevenLabs)."
         value={value.audio}
-        cloudName={cloudName}
+        quizId={quizId}
         onChange={(audio) => set({ audio })}
       />
       <TextField
@@ -129,13 +177,7 @@ export function VoiceNoteField({ value, onChange, cloudName }: {
         onChange={(senderName) => set({ senderName })}
       />
       <ColorField label="Cor do nome" value={value.senderColor} onChange={(senderColor) => set({ senderColor })} />
-      <MediaField
-        label="Foto (avatar)"
-        value={value.avatar}
-        allowAnimated={false}
-        cloudName={cloudName}
-        onChange={(avatar) => set({ avatar: avatar?.kind === "image" ? avatar : undefined })}
-      />
+      <AvatarUpload value={value.avatarUrl} quizId={quizId} onChange={(avatarUrl) => set({ avatarUrl })} />
       <SelectField
         label="Som de fundo"
         value={ambience.kind}
@@ -158,7 +200,7 @@ export function VoiceNoteField({ value, onChange, cloudName }: {
           label="Áudio de fundo (toca em loop)"
           hint="Ex.: café, restaurante, pessoas conversando. Use áudio livre de direitos (Pixabay, Freesound CC0)."
           value={ambience.file}
-          cloudName={cloudName}
+          quizId={quizId}
           onChange={(file) => set({ ambience: { ...ambience, file } })}
         />
       )}

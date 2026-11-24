@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore, type PointerEvent } from "react";
 import type { VoiceNote } from "@/features/steps/shared/primitives";
-import { audioUrl, imageUrl } from "../cloudinary";
 import { createAmbience, type Ambience } from "./ambience";
 import { formatDuration, nextSpeed, waveformBars } from "./waveform";
 
@@ -21,10 +20,10 @@ const WA = {
   heard: "#53bdeb",
 };
 
-type Props = { note: VoiceNote; cloudName?: string };
+type Props = { note: VoiceNote };
 
 /** Balão de áudio no estilo WhatsApp. Só aparece quando o áudio já foi enviado. */
-export function VoiceNoteView({ note, cloudName }: Props) {
+export function VoiceNoteView({ note }: Props) {
   const audioRef = useRef<HTMLAudioElement>(null);
   const ambienceRef = useRef<Ambience | null>(null);
   const [playing, setPlaying] = useState(false);
@@ -32,7 +31,7 @@ export function VoiceNoteView({ note, cloudName }: Props) {
   const [current, setCurrent] = useState(0);
   const [speed, setSpeed] = useState(1);
 
-  const bars = useMemo(() => waveformBars(note.audio?.publicId ?? note.senderName), [note.audio?.publicId, note.senderName]);
+  const bars = useMemo(() => waveformBars(note.audio?.url ?? note.senderName), [note.audio?.url, note.senderName]);
   const duration = note.audio?.durationSec ?? 0;
   const progress = duration > 0 ? Math.min(1, current / duration) : 0;
 
@@ -41,9 +40,9 @@ export function VoiceNoteView({ note, cloudName }: Props) {
 
   useEffect(() => () => ambienceRef.current?.dispose(), []);
 
-  if (!note.audio || !cloudName) return null;
-  const src = audioUrl(cloudName, note.audio.publicId);
-  const ambienceSrc = note.ambience.file ? audioUrl(cloudName, note.ambience.file.publicId) : undefined;
+  if (!note.audio) return null;
+  const src = note.audio.url;
+  const ambienceSrc = note.ambience.file?.url;
 
   function ambience(): Ambience | null {
     if (!ambienceRef.current) ambienceRef.current = createAmbience(note.ambience.kind, note.ambience.volume, ambienceSrc);
@@ -84,7 +83,7 @@ export function VoiceNoteView({ note, cloudName }: Props) {
   }
 
   const accent = heard ? WA.heard : WA.unheard;
-  const avatar = note.avatar ? imageUrl(cloudName, note.avatar.publicId, 112) : undefined;
+  const avatar = note.avatarUrl;
 
   return (
     <div className="mt-5 rounded-[var(--q-radius)] p-3" style={{ background: WA.chat }}>
@@ -168,7 +167,7 @@ export function VoiceNoteView({ note, cloudName }: Props) {
           ) : (
             <div className="relative size-12 shrink-0">
               {avatar ? (
-                // eslint-disable-next-line @next/next/no-img-element -- avatar pequeno do Cloudinary
+                // eslint-disable-next-line @next/next/no-img-element -- avatar pequeno do R2
                 <img src={avatar} alt="" className="size-12 rounded-full object-cover" />
               ) : (
                 <span className="grid size-12 place-content-center rounded-full bg-[#dfe5e7] text-lg font-semibold text-white">

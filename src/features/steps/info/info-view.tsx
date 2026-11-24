@@ -11,7 +11,7 @@ export function InfoView({ step, ctx, dispatch, cloudName, isFirst, isLast }: St
     <>
       {step.media && <MediaView media={step.media} cloudName={cloudName} priority={isFirst} />}
       <h1 className="mt-6 text-2xl leading-tight font-bold text-balance">{interpolate(step.title, ctx)}</h1>
-      {step.voiceNote && <VoiceNoteView note={step.voiceNote} cloudName={cloudName} />}
+      {step.voiceNote && <VoiceNoteView note={step.voiceNote} />}
       {step.body && <RichText text={step.body} ctx={ctx} className="mt-3 text-base leading-relaxed opacity-90" />}
       {!isLast && <StickyCta onClick={() => dispatch({ type: "next" })}>{interpolate(step.ctaLabel, ctx)}</StickyCta>}
     </>

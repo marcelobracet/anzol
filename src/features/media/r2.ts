@@ -11,8 +11,30 @@ export type R2Env = {
 };
 
 export type SignedVideoUpload = { uploadUrl: string; publicUrl: string };
+export type SignedMediaUpload = SignedVideoUpload;
 
-const EXTENSIONS: Record<string, string> = { "video/mp4": "mp4", "video/quicktime": "mov", "video/webm": "webm" };
+// Tipos aceitos por categoria → extensão do arquivo e pasta no bucket.
+export type MediaCategory = "video" | "audio" | "image";
+const CATEGORIES: Record<MediaCategory, { prefix: string; types: Record<string, string>; error: string }> = {
+  video: { prefix: "vsl", types: { "video/mp4": "mp4", "video/quicktime": "mov", "video/webm": "webm" }, error: "Envie um vídeo MP4, MOV ou WebM" },
+  audio: {
+    prefix: "audio",
+    types: {
+      "audio/mpeg": "mp3",
+      "audio/mp3": "mp3",
+      "audio/mp4": "m4a",
+      "audio/x-m4a": "m4a",
+      "audio/aac": "aac",
+      "audio/ogg": "ogg",
+      "audio/wav": "wav",
+      "audio/x-wav": "wav",
+      "audio/webm": "webm",
+    },
+    error: "Envie um áudio MP3, M4A, AAC, OGG, WAV ou WebM",
+  },
+  image: { prefix: "img", types: { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp" }, error: "Envie uma imagem JPG, PNG ou WebP" },
+};
+const EXTENSIONS = CATEGORIES.video.types;
 export const VIDEO_TYPES = Object.keys(EXTENSIONS);
 const UPLOAD_EXPIRES_SECONDS = 60 * 60;
 
@@ -61,16 +83,27 @@ export function presignUrl({ method, url, region, accessKeyId, secretAccessKey, 
   return `${target.origin}${canonicalPath}?${canonicalQuery}&X-Amz-Signature=${signature}`;
 }
 
-export function r2ObjectKey(quizId: string, contentType: string, id: string): string {
-  return `vsl/${quizId}/${id}.${EXTENSIONS[contentType]}`;
+export function r2ObjectKey(quizId: string, contentType: string, id: string, category: MediaCategory = "video"): string {
+  const { prefix, types } = CATEGORIES[category];
+  return `${prefix}/${quizId}/${id}.${types[contentType]}`;
 }
 
 type UploadRequest = { quizId: string; contentType: string; id: string };
 
 // O browser envia o vídeo direto ao bucket com PUT; as chaves do R2 nunca saem do servidor.
 export function signVideoUpload(env: R2Env, request: UploadRequest, now: Date = new Date()): Result<SignedVideoUpload> {
-  if (!EXTENSIONS[request.contentType]) return { success: false, error: "Envie um vídeo MP4, MOV ou WebM" };
-  const key = r2ObjectKey(request.quizId, request.contentType, request.id);
+  return signMediaUpload(env, { ...request, category: "video" }, now);
+}
+
+// Mesmo fluxo para áudio e imagem (balão de WhatsApp): não depende das permissões da chave do Cloudinary.
+export function signMediaUpload(
+  env: R2Env,
+  request: UploadRequest & { category: MediaCategory },
+  now: Date = new Date(),
+): Result<SignedMediaUpload> {
+  const category = CATEGORIES[request.category];
+  if (!category.types[request.contentType]) return { success: false, error: category.error };
+  const key = r2ObjectKey(request.quizId, request.contentType, request.id, request.category);
   const uploadUrl = presignUrl({
     method: "PUT",
     url: `https://${env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com/${env.R2_BUCKET}/${key}`,
