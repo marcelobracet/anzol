@@ -158,6 +158,17 @@ describe("vsl_progress (retenção do vídeo)", () => {
     expect(deps.events).toHaveLength(0);
   });
 
+  it("aceita o segundo exato do CTA do step, mesmo fora da grade", async () => {
+    // fixture: CTA do vsl_1 aos 600s (na grade); usa um step com CTA fora da grade
+    const doc = fullDocumentInput();
+    const vsl = doc.steps.find((s: { id: string }) => s.id === "vsl_1") as { cta: { showAt: number } };
+    vsl.cta.showAt = 490;
+    deps.loadQuiz = vi.fn().mockResolvedValue({ ...quiz(), document: QuizDocument.parse(doc) });
+    const service = createTrackService(deps);
+    expect(await service.track(request(progress({ videoSecond: 490 })))).toMatchObject({ success: true });
+    expect(await service.track(request(progress({ videoSecond: 491 })))).toMatchObject({ success: false, status: 400 });
+  });
+
   it("outros eventos guardam videoSecond nulo mesmo se o cliente mandar", async () => {
     await createTrackService(deps).track(request(body({ type: "step_view", stepId: "vsl_1", videoSecond: 30 })));
     expect(deps.events[0]).toMatchObject({ type: "step_view", videoSecond: null });

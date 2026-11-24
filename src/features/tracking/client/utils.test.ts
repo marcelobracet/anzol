@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { fbcFromClick, initialConsent, pixelAllowed, readCookie, readUtm } from "./utils";
+import { fbcFromClick, initialConsent, pixelAllowed, readCookie, readUtm, retentionKey } from "./utils";
 
 describe("readUtm", () => {
   it("pega só parâmetros de rastreamento, cortados", () => {
@@ -34,5 +34,18 @@ describe("consentimento", () => {
     expect(pixelAllowed("not_required")).toBe(true);
     expect(pixelAllowed("granted")).toBe(true);
     for (const s of ["ask", "denied", "pending"] as const) expect(pixelAllowed(s)).toBe(false);
+  });
+});
+
+describe("retentionKey", () => {
+  it("progresso do vídeo usa o id do navegador; o resto, o da aba", () => {
+    const ids = { session: "aba123456", viewer: "navegador123" };
+    expect(retentionKey("vsl_progress", ids)).toBe("navegador123");
+    expect(retentionKey("vsl_view", ids)).toBe("aba123456");
+    expect(retentionKey("checkout_click", ids)).toBe("aba123456");
+  });
+
+  it("sem id do navegador (storage bloqueado) cai no da aba", () => {
+    expect(retentionKey("vsl_progress", { session: "aba123456", viewer: null })).toBe("aba123456");
   });
 });

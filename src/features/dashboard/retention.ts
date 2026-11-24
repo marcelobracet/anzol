@@ -25,9 +25,9 @@ export function buildRetention(rows: RetentionRow[], opts: { views: number; ctaA
 
   const share = (n: number) => round(n / starts);
   const lastObserved = Math.max(...rows.map((r) => r.maxSecond));
-  const last = Math.max(lastObserved, milestoneAt(opts.ctaAt));
+  const last = Math.max(lastObserved, milestoneAt(opts.ctaAt, [opts.ctaAt]));
   const watching = (second: number) => rows.filter((r) => r.maxSecond >= second).reduce((sum, r) => sum + r.sessions, 0);
-  const points = milestonesUpTo(last).map((second) => {
+  const points = milestonesUpTo(last, [opts.ctaAt]).map((second) => {
     const sessions = watching(second);
     return { second, sessions, share: share(sessions) };
   });

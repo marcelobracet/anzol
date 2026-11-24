@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isMilestone, milestoneAt, nextMilestone } from "./milestones";
+import { isMilestone, isMilestoneWith, milestoneAt, milestonesUpTo, nextMilestone } from "./milestones";
 
 describe("milestoneAt", () => {
   it("usa passos de 5s no primeiro minuto", () => {
@@ -40,5 +40,22 @@ describe("nextMilestone", () => {
 
   it("não reenvia ao recomeçar o vídeo do zero", () => {
     expect(nextMilestone(120, 2)).toBeNull();
+  });
+});
+
+describe("segundo do botão (CTA) como marco extra", () => {
+  // CTA aos 490s cai entre 480 e 510 na grade de 30s: sem o ponto extra, quem para em 495s vira 480.
+  it("quem passa do CTA grava o segundo exato do CTA", () => {
+    expect(milestoneAt(495, [490])).toBe(490);
+    expect(milestoneAt(489, [490])).toBe(480);
+    expect(milestoneAt(515, [490])).toBe(510);
+    expect(nextMilestone(480, 492, [490])).toBe(490);
+    expect(nextMilestone(490, 500, [490])).toBeNull();
+  });
+
+  it("aceita o segundo do CTA como marco válido e o inclui na curva", () => {
+    expect(isMilestone(490)).toBe(false);
+    expect(isMilestoneWith(490, [490])).toBe(true);
+    expect(milestonesUpTo(520, [490]).slice(-4)).toEqual([450, 480, 490, 510]);
   });
 });

@@ -1,19 +1,16 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { createRateLimiter } from "@/features/tracking/rate-limit";
+import { createTrackLimiter } from "@/features/tracking/rate-limit";
 import { requestMeta } from "@/features/tracking/request-meta";
 import { trackService } from "@/features/tracking/server";
 
 const MAX_BODY_BYTES = 8 * 1024;
-const limiter = createRateLimiter({ limit: 60, windowMs: 60_000 });
+// Uma pessoa manda ~13 marcos de vídeo no 1º minuto; 600 dá folga para ~40 assistindo juntas no mesmo IP.
+const limiter = createTrackLimiter({ eventsPerMinute: 60, progressPerMinute: 600 });
 
 // Eventos do quiz (funil + Pixel/CAPI). Só no domínio da oferta.
 export async function POST(request: NextRequest) {
   const meta = requestMeta(request.headers);
   if (!meta.host) return NextResponse.json({ success: false, error: "Host inválido" }, { status: 400 });
-  if (!limiter.allow(meta.ip ?? "unknown")) {
-    return NextResponse.json({ success: false, error: "Muitas requisições" }, { status: 429 });
-  }
-
   const raw = await request.text();
   if (raw.length > MAX_BODY_BYTES) return NextResponse.json({ success: false, error: "Corpo grande demais" }, { status: 413 });
   let body: unknown;
@@ -21,6 +18,11 @@ export async function POST(request: NextRequest) {
     body = JSON.parse(raw);
   } catch {
     return NextResponse.json({ success: false, error: "JSON inválido" }, { status: 400 });
+  }
+  // O tipo só escolhe a cota; a validação de verdade é no trackService.
+  const type = typeof body === "object" && body !== null && "type" in body && typeof body.type === "string" ? body.type : undefined;
+  if (!limiter.allow(meta.ip ?? "unknown", type)) {
+    return NextResponse.json({ success: false, error: "Muitas requisições" }, { status: 429 });
   }
 
   try {
